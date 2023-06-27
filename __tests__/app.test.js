@@ -229,3 +229,65 @@ describe('GET /api', () => {
         });
     });
 });
+
+describe('GET /api/articles/:article_id', () => {
+    test('response data should be on an "article" key with a 200 http status code', () => {
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body).toHaveProperty('article');
+        });
+    });
+
+    test('article should match expected test article', () => {
+        const expectedArticle = {
+            article_id: 1,  // assume psql assigns this article a serial primary key of 1
+            title: 'Living in the shadow of a great man',
+            topic: 'mitch',
+            author: 'butter_bridge',
+            body: 'I find this existence challenging',
+            created_at: '2020-07-09T20:11:00.000Z',
+            votes: 100,
+            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+        };
+
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(expectedArticle);
+        });
+    });
+
+    describe('error handling', () => {
+        it('should return a http 400 error if provided id is not a number', () => {
+            return request(app)
+            .get('/api/articles/not_a_number')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid article id');
+            });
+        });
+
+        it('should return a http 404 error if article not in database', () => {
+            return request(app)
+            .get('/api/articles/99')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('article not found');
+            });
+        });
+    });
+});
+
+describe('endpoint not found', () => {
+    it('should return a http 404 error if endpoint not found', () => {
+        return request(app)
+        .get('/api/not_an_endpoint')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('endpoint not found');
+        });
+    });
+});
