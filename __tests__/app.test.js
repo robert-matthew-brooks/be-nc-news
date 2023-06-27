@@ -287,7 +287,6 @@ describe('endpoint not found', () => {
         .get('/api/not_an_endpoint')
         .expect(404)
         .then(({ body }) => {
-            console.log(body);
             expect(body.msg).toBe('endpoint not found');
         });
     });
