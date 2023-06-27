@@ -1,4 +1,11 @@
 class ErrorHandlers {
+    static appErrorHandler(err, req, res, next) {
+        if (err.status) {
+            res.status(err.status).send({ msg: err.msg });
+        }
+        else next(err);
+    }
+
     static psqlErrorsHandler(err, req, res, next) {
         if (err.code === '42P01') {
             res.status(500).send({ msg: `table not found` });
