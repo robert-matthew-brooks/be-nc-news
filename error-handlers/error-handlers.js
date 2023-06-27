@@ -1,5 +1,12 @@
 class ErrorHandlers {
-    static psqlErrorsHandler(err, req, res, next) {
+    static fsErrorHandler(err, req, res, next) {
+        if (err.code === 'ENOENT') {
+            res.status(500).send({ msg: 'file not found' });
+        }
+        else next(err);
+    }
+
+    static psqlErrorHandler(err, req, res, next) {
         if (err.code === '42P01') {
             res.status(500).send({ msg: `table not found` });
         }
@@ -9,7 +16,7 @@ class ErrorHandlers {
         else next(err);
     }
 
-    static serverErrorsHandler(err, req, res, next) {
+    static serverErrorHandler(err, req, res, next) {
         res.status(500).send({ msg: 'unhandled internal server error' });
     }
 }
