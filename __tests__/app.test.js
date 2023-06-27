@@ -1,10 +1,10 @@
+const request = require('supertest');
+
+const fs = require('fs/promises');
 const app = require('../app.js');
 const data = require('../db/data/test-data/index.js');
 const seed = require('../db/seeds/seed.js');
 const db = require('../db/connection.js');
-
-const request = require('supertest');
-const fs = require('fs/promises');
 
 beforeEach(() => {
     return seed(data);
@@ -24,7 +24,7 @@ describe('GET /api/topics', () => {
         });
     });
     
-    test('response data should contain three topics', () => {
+    test('response should contain three topics', () => {
         return request(app)
         .get('/api/topics')
         .expect(200)
@@ -49,7 +49,7 @@ describe('GET /api/topics', () => {
         });
     });
 
-    test('response data should match the provided seed data', () => {
+    test('response should match the provided seed data', () => {
         const seedTopics = data.topicData;
 
         return request(app)
@@ -83,38 +83,27 @@ describe('GET /api/topics', () => {
 });
 
 describe('GET /api', () => {
-    test('response data should be on an "endpoints" key with 200 http status', () => {
+    test('response should be an object with 200 http status', () => {
         return request(app)
         .get('/api')
         .expect(200)
         .then(({ body }) => {
-            expect(body).toHaveProperty('endpoints');
+            expect(body).toBeInstanceOf(Object);
         });
     });
 
-    test('each endpoint (apart from /api) should have correct object layout', () => {
-        const expectedLayout = {
-            description: expect.any(String),
-            allowedQueries: expect.any(Array),
-            exampleRequest: expect.any(Object),
-            exampleResponse: expect.any(Object)
-        };
+    test('response should match what is in the endpoints.json file', () => {
+        const endpoints_json = require('../endpoints.json');
 
         return request(app)
         .get('/api')
         .expect(200)
         .then(({ body }) => {
-            const endpoints = body.endpoints;
-
-            for (const endpoint in endpoints) {
-                if (endpoint !== "GET /api") {
-                    expect(endpoints[endpoint]).toMatchObject(expectedLayout);
-                }
-            }
+            expect(body).toEqual(endpoints_json);
         });
     });
 
-    xtest('example response from /api should match the format of the actual response provided by the endpoint', () => {
+    test('exampleResponse from /api should match the format of the actual response provided by the endpoint', () => {
 
         // this test should be dynamic for an evolving endpoints.json file
         // so this test doesn't need to be updated when endpoints.json is updated
@@ -126,7 +115,7 @@ describe('GET /api', () => {
 
             // get list of endpoints from /api
             
-            const endpoints = body.endpoints;
+            const endpoints = body;
             const supertestRequests = [];
 
             for (const endpoint in endpoints) {
@@ -208,26 +197,6 @@ describe('GET /api', () => {
             }
         });
     });
-
-    describe('error handling', () => {
-        it('should return a http 500 error if endpoints.json file not available', () => {
-            const correctPath = `${__dirname}/../endpoints.json`;
-            const incorrectPath = `${__dirname}/../endpointsss.json`;
-
-            return fs.rename(correctPath, incorrectPath)
-            .then(() => {
-                return request(app)
-                .get('/api')
-                .expect(500)
-            })
-            .then(({ body }) => {
-                expect(body.msg).toBe('file not found');
-            })
-            .then(() => {
-                fs.rename(incorrectPath, correctPath);
-            });
-        });
-    });
 });
 
 describe('GET /api/articles/:article_id', () => {
@@ -281,17 +250,114 @@ describe('GET /api/articles/:article_id', () => {
     });
 });
 
+describe('GET /api/articles', () => {
+    test('response data should be on a "articles" key with 200 http status', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body).toHaveProperty('articles');
+        });
+    });
+    
+    test('response should contain thirteen articles', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13);
+        });
+    });
+
+    test('each article should have correct object layout', () => {
+        const objectLayout = {
+            author: expect.any(String),
+            title: expect.any(String),
+            article_id: expect.any(Number),
+            topic: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String),
+            comment_count: expect.any(Number)
+        };
+
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            for (const article of body.articles) {
+                expect(article).toMatchObject(objectLayout);
+            }
+        });
+    });
+
+    test('each article should not have a body property', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            for (const article of body.articles) {
+                expect(article).not.toHaveProperty('body');
+            }
+        });
+    });
+
+    test('article should match expected test article', () => {
+        const expectedArticle = {
+            article_id: 1,  // assume psql assigns this article a serial primary key of 1
+            title: 'Living in the shadow of a great man',
+            topic: 'mitch',
+            author: 'butter_bridge',
+            body: 'I find this existence challenging',
+            created_at: '2020-07-09T20:11:00.000Z',
+            votes: 100,
+            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+        };
+
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(expectedArticle);
+        });
+    });
+
+    test('articles should be sorted in descending date order', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('created_at', { descending: true });
+        });
+    });
+
+    describe('error handling', () => {
+        it('should return a http 500 error if table not available', () => {
+            return db.query(`DROP TABLE IF EXISTS articles CASCADE;`)
+            .then(() => {
+                return request(app)
+                .get('/api/articles')
+                .expect(500)
+            })
+            .then(({ body }) => {
+                expect(body.msg).toBe('table not found');
+            });
+        });
+    });
+});
+
 describe('GET /api/articles/:article_id/comments', () => {
     test('response data should be on a "comments" key with 200 http status', () => {
         return request(app)
         .get('/api/articles/1/comments')
         .expect(200)
         .then(({ body }) => {
+            console.log(body);
             expect(body).toHaveProperty('comments');
         });
     });
 
-    test('response data be an empty array if article has no comments', () => {
+    test('response should be an empty array if article has no comments', () => {
         return request(app)
         .get('/api/articles/2/comments')    // article 2 has no corresponding comments
         .expect(200)
@@ -329,7 +395,7 @@ describe('GET /api/articles/:article_id/comments', () => {
         });
     });
 
-    test('returned comment should match expected test comment', () => {
+    test('comment should match expected test comment', () => {
         const expectedComment = {
             'comment_id': 5,
             'votes': 0,

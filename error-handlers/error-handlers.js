@@ -6,13 +6,6 @@ class ErrorHandlers {
         else next(err);
     }
 
-    static fsErrorHandler(err, req, res, next) {
-        if (err.code === 'ENOENT') {
-            res.status(500).send({ msg: 'file not found' });
-        }
-        else next(err);
-    }
-
     static psqlErrorHandler(err, req, res, next) {
         if (err.code === '42P01') {
             res.status(500).send({ msg: `table not found` });
