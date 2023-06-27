@@ -229,3 +229,39 @@ describe('GET /api', () => {
         });
     });
 });
+
+describe('GET /api/articles', () => {
+    test('response data should be on a "articles" key with 200 http status', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body).toHaveProperty('articles');
+        });
+    });
+    
+    test('response data should contain thirteen articles', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13);
+        });
+    });
+
+    // test one article element
+
+    describe('error handling', () => {
+        it('should return a http 500 error if table not available', () => {
+            return db.query(`DROP TABLE IF EXISTS articles CASCADE;`)
+            .then(() => {
+                return request(app)
+                .get('/api/articles')
+                .expect(500)
+            })
+            .then(({ body }) => {
+                expect(body.msg).toBe('table not found');
+            });
+        });
+    });
+});
