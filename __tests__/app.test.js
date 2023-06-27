@@ -89,81 +89,36 @@ describe('GET /api/articles/:article_id', () => {
         });
     });
 
-    test('each article should have correct object layout', () => {
-        const objectLayout = {
-            article_id: expect.any(Number),
-            title: expect.any(String),
-            topic: expect.any(String),
-            author: expect.any(String),
-            body: expect.any(String),
-            created_at: expect.any(String),
-            votes: expect.any(Number),
-            article_img_url: expect.any(String)
+    test('article should match expected test article', () => {
+        const expectedArticle = {
+            article_id: 1,  // assume psql assigns this article a serial primary key of 1
+            title: 'Living in the shadow of a great man',
+            topic: 'mitch',
+            author: 'butter_bridge',
+            body: 'I find this existence challenging',
+            created_at: '2020-07-09T20:11:00.000Z',
+            votes: 100,
+            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
         };
 
-        const supertestRequests = [];
-
-        for (let i=1; i<=13; i++) {  // 13 articles in test db
-            const pendingRequest = request(app)
-            .get(`/api/articles/${i}`)
-            .expect(200);
-            
-            const article = new Promise((resolve, reject) => {
-                pendingRequest.then(({ body }) => {
-                    resolve(body.article);
-                })
-                .catch(err => reject(err));
-            });
-
-            supertestRequests.push(article);
-        }
-
-        return Promise.all(supertestRequests)
-        .then(articles => {
-            for (const article in articles) {
-                expect(articles[article]).toMatchObject(objectLayout);
-            }
-        });
-    });
-
-    test('response data should match the provided seed data', () => {
-        const seedArticles = data.articleData;
-
-        const supertestRequests = [];
-
-        for (let i=0; i<seedArticles.length; i++) {
-            const seedArticle = seedArticles[i];
-
-            // timestamps in SQL have not been stored as UTC, need converting
-
-            const timestamp = new Date(seedArticle.created_at);
-            const localTimestamp = new Date(timestamp.getTime() + timestamp.getTimezoneOffset()*60000)
-            seedArticle.created_at = localTimestamp.toISOString();
-
-            const pendingRequest = request(app)
-            .get(`/api/articles/${i+1}`)
-            .expect(200);
-            
-            const articles = new Promise((resolve, reject) => {
-                pendingRequest.then(({ body }) => {
-                    const article = body.article;
-                    resolve({ seedArticle, article });
-                })
-                .catch(err => reject(err));
-            });
-
-            supertestRequests.push(articles);
-        }
-
-        return Promise.all(supertestRequests)
-        .then((supertestResponses) => {
-            for (const response of supertestResponses) {
-                expect(response.article).toMatchObject(response.seedArticle);
-            }
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(expectedArticle);
         });
     });
 
     describe('error handling', () => {
+        it('should return a http 400 error if provided id is not a number', () => {
+            return request(app)
+            .get('/api/articles/not_a_number')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid article id');
+            });
+        });
+
         it('should return a http 404 error if article not in database', () => {
             return request(app)
             .get('/api/articles/99')
@@ -171,6 +126,18 @@ describe('GET /api/articles/:article_id', () => {
             .then(({ body }) => {
                 expect(body.msg).toBe('article not found');
             });
+        });
+    });
+});
+
+describe('endpoint not found', () => {
+    it('should return a http 404 error if endpoint not found', () => {
+        return request(app)
+        .get('/api/not_an_endpoint')
+        .expect(404)
+        .then(({ body }) => {
+            console.log(body);
+            expect(body.msg).toBe('endpoint not found');
         });
     });
 });

@@ -2,6 +2,10 @@ const db = require('../db/connection.js');
 
 class ArticlesModels {
     static getArticle(articleId) {
+        if (!/[0-9]+/.test(articleId)) {
+            return Promise.reject({ status: 400, msg: 'invalid article id' });
+        }
+
         const queryString = `
             SELECT * FROM articles
             WHERE article_id = $1;

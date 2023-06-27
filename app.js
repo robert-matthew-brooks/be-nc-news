@@ -11,6 +11,12 @@ app.get('/api/topics', TopicsController.getTopics);
 // articles
 app.get('/api/articles/:article_id', ArticlesController.getArticle);
 
+// endpoint not found
+app.all('*', (req, res, next) => {
+    const err = { status: 404, msg: 'endpoint not found' };
+    next(err, req, res, next);
+})
+
 // errors
 app.use(ErrorHandlers.appErrorHandler);
 app.use(ErrorHandlers.psqlErrorsHandler);
