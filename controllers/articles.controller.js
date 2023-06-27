@@ -10,6 +10,14 @@ class ArticlesController {
         })
         .catch(next);
     }
+
+    static getArticles(req, res, next) {
+        ArticlesModels.getArticles()
+        .then(articles => {
+            res.status(200).send({ articles });
+        })
+        .catch(next);
+    }
 }
 
 module.exports = ArticlesController;

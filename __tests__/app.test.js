@@ -1,10 +1,11 @@
-const app = require('../app.js');
-const data = require('../db/data/test-data/index.js');
-const seed = require('../db/seeds/seed.js');
-const db = require('../db/connection.js');
-
 const request = require('supertest');
 const fs = require('fs/promises');
+
+const db = require('../db/connection.js');
+const app = require('../app.js');
+const seed = require('../db/seeds/seed.js');
+const data = require('../db/data/test-data/index.js');
+
 
 beforeEach(() => {
     return seed(data);
@@ -50,20 +51,16 @@ describe('GET /api/topics', () => {
     });
 
     test('response data should match the provided seed data', () => {
-        const seedTopics = data.topicData;
+        const expectedTopic = {
+            description: 'The man, the Mitch, the legend',
+            slug: 'mitch'
+        };
 
         return request(app)
         .get('/api/topics')
         .expect(200)
         .then(({ body }) => {
-            const responseTopics = body.topics.map(topic => {
-                const slug = topic.slug;
-                const description = topic.description;
-
-                return { slug, description };
-            });
-
-            expect(responseTopics).toEqual(seedTopics);
+            expect(body.topics[0]).toEqual(expectedTopic);
         });
     });
 
@@ -92,25 +89,19 @@ describe('GET /api', () => {
         });
     });
 
-    test('each endpoint (apart from /api) should have correct object layout', () => {
-        const expectedLayout = {
-            description: expect.any(String),
-            allowedQueries: expect.any(Array),
-            exampleRequest: expect.any(Object),
-            exampleResponse: expect.any(Object)
-        };
+    test('response data should match what is in the endpoints.json file', () => {
+        let fileContents;
 
-        return request(app)
-        .get('/api')
-        .expect(200)
+        return fs.readFile(`${__dirname}/../endpoints.json`, 'utf-8')
+        .then(data => {
+            fileContents = JSON.parse(data);
+            
+            return request(app)
+            .get('/api')
+            .expect(200)
+        })
         .then(({ body }) => {
-            const endpoints = body.endpoints;
-
-            for (const endpoint in endpoints) {
-                if (endpoint !== "GET /api") {
-                    expect(endpoints[endpoint]).toMatchObject(expectedLayout);
-                }
-            }
+            expect(body.endpoints).toEqual(fileContents);
         });
     });
 
@@ -142,7 +133,7 @@ describe('GET /api', () => {
                     // extract the /api example response
 
                     const exampleResponse = endpoints[endpoint].exampleResponse;
-                    const exampleRequest = endpoints[endpoint].exampleRequest;
+                    const exampleRequest = endpoints[endpoint].exampleRequest || {};
 
                     // also extract the key the response array is assigned to
 
@@ -276,6 +267,102 @@ describe('GET /api/articles/:article_id', () => {
             .expect(404)
             .then(({ body }) => {
                 expect(body.msg).toBe('article not found');
+            });
+        });
+    });
+});
+
+describe('GET /api/articles', () => {
+    test('response data should be on a "articles" key with 200 http status', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body).toHaveProperty('articles');
+        });
+    });
+    
+    test('response data should contain thirteen articles', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13);
+        });
+    });
+
+    test('each article should have correct object layout', () => {
+        const objectLayout = {
+            author: expect.any(String),
+            title: expect.any(String),
+            article_id: expect.any(Number),
+            topic: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String),
+            comment_count: expect.any(Number)
+        };
+
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            for (const article of body.articles) {
+                expect(article).toMatchObject(objectLayout);
+            }
+        });
+    });
+
+    test('each article should not have a body property', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            for (const article of body.articles) {
+                expect(article).not.toHaveProperty('body');
+            }
+        });
+    });
+
+    test('response data should match the provided seed data', () => {
+        const expectedArticle = {
+            author: 'icellusedkars',
+            title: 'Eight pug gifs that remind me of mitch',
+            article_id: 3,
+            topic: 'mitch',
+            created_at: '2020-11-03T09:12:00.000Z',
+            votes: 0,
+            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+            comment_count: 2
+        };
+
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles[0]).toEqual(expectedArticle);
+        });
+    });
+
+    test('articles should be sorted in descending date order', () => {
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('created_at', { descending: true });
+        });
+    });
+
+    describe('error handling', () => {
+        it('should return a http 500 error if table not available', () => {
+            return db.query(`DROP TABLE IF EXISTS articles CASCADE;`)
+            .then(() => {
+                return request(app)
+                .get('/api/articles')
+                .expect(500)
+            })
+            .then(({ body }) => {
+                expect(body.msg).toBe('table not found');
             });
         });
     });

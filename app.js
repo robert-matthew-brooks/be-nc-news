@@ -1,8 +1,10 @@
 const express = require('express');
+
 const ApiController = require('./controllers/api.controller.js');
 const TopicsController = require('./controllers/topics.controller.js');
 const ArticlesController = require('./controllers/articles.controller.js');
 const ErrorHandlers = require('./error-handlers/error-handlers.js');
+
 
 const app = express();
 
@@ -14,6 +16,7 @@ app.get('/api/topics', TopicsController.getTopics);
 
 // articles
 app.get('/api/articles/:article_id', ArticlesController.getArticle);
+app.get('/api/articles', ArticlesController.getArticles);
 
 // endpoint not found
 app.all('*', (req, res, next) => {
