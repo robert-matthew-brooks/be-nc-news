@@ -1,22 +1,25 @@
 const express = require('express');
 
-const ApiController = require('./controllers/api.controller.js');
-const TopicsController = require('./controllers/topics.controller.js');
-const ArticlesController = require('./controllers/articles.controller.js');
-const ErrorHandlers = require('./error-handlers/error-handlers.js');
-
+const apiController = require('./controllers/api.controller.js');
+const topicsController = require('./controllers/topics.controller.js');
+const articlesController = require('./controllers/articles.controller.js');
+const commentsController = require('./controllers/comments.controller.js');
+const errorHandlers = require('./error-handlers/error-handlers.js');
 
 const app = express();
 
 // api
-app.get('/api', ApiController.getEndpointDetails);
+app.get('/api', apiController.getEndpointDetails);
 
 // topics
-app.get('/api/topics', TopicsController.getTopics);
+app.get('/api/topics', topicsController.getTopics);
 
 // articles
-app.get('/api/articles/:article_id', ArticlesController.getArticle);
-app.get('/api/articles', ArticlesController.getArticles);
+app.get('/api/articles/:article_id', articlesController.getArticle);
+app.get('/api/articles', articlesController.getArticles);
+
+// comments
+app.get('/api/articles/:article_id/comments', commentsController.getComments);
 
 // endpoint not found
 app.all('*', (req, res, next) => {
@@ -25,9 +28,8 @@ app.all('*', (req, res, next) => {
 })
 
 // errors
-app.use(ErrorHandlers.appErrorHandler);
-app.use(ErrorHandlers.fsErrorHandler);
-app.use(ErrorHandlers.psqlErrorHandler);
-app.use(ErrorHandlers.serverErrorHandler);
+app.use(errorHandlers.appErrorHandler);
+app.use(errorHandlers.psqlErrorHandler);
+app.use(errorHandlers.serverErrorHandler);
 
 module.exports = app;

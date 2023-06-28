@@ -1,13 +1,9 @@
-const ApiModels = require('../models/api.models.js');
+const endpoints_json = require('../endpoints.json');
 
-class ApiContoller {
-    static getEndpointDetails(req, res, next) {
-        return ApiModels.getEndpointDetails()
-        .then(endpoints => {
-            res.status(200).send({ endpoints });
-        })
-        .catch(next);
-    }
+function getEndpointDetails(req, res, next) {
+    res.status(200).send(endpoints_json);
 }
 
-module.exports = ApiContoller;
+module.exports = {
+    getEndpointDetails
+};

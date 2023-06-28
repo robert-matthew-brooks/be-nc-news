@@ -1,13 +1,13 @@
-const TopicsModels = require('../models/topics.models.js');
+const topicsModels = require('../models/topics.models.js');
 
-class TopicsContoller {
-    static getTopics(req, res, next) {
-        return TopicsModels.getTopics()
-        .then(topics => {
-            res.status(200).send({ topics });
-        })
-        .catch(next);
-    }
+function getTopics(req, res, next) {
+    return topicsModels.getTopics()
+    .then(topics => {
+        res.status(200).send({ topics });
+    })
+    .catch(next);
 }
 
-module.exports = TopicsContoller;
+module.exports = {
+    getTopics
+};
