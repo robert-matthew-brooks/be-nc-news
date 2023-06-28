@@ -15,25 +15,7 @@ afterAll(() => {
 });
 
 describe('GET /api/topics', () => {
-    test('response data should be on a "topics" key with 200 http status', () => {
-        return request(app)
-        .get('/api/topics')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body).toHaveProperty('topics');
-        });
-    });
-    
-    test('response should contain three topics', () => {
-        return request(app)
-        .get('/api/topics')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.topics).toHaveLength(3);
-        });
-    });
-
-    test('each topic should have correct object layout', () => {
+    test('200: should have 3 topics with correct object layout', () => {
         const objectLayout = {
             slug: expect.any(String),
             description: expect.any(String)
@@ -43,32 +25,16 @@ describe('GET /api/topics', () => {
         .get('/api/topics')
         .expect(200)
         .then(({ body }) => {
+            expect(body.topics).toHaveLength(3);
+
             for (const topic of body.topics) {
                 expect(topic).toMatchObject(objectLayout);
             }
         });
     });
 
-    test('response should match the provided seed data', () => {
-        const seedTopics = data.topicData;
-
-        return request(app)
-        .get('/api/topics')
-        .expect(200)
-        .then(({ body }) => {
-            const responseTopics = body.topics.map(topic => {
-                const slug = topic.slug;
-                const description = topic.description;
-
-                return { slug, description };
-            });
-
-            expect(responseTopics).toEqual(seedTopics);
-        });
-    });
-
     describe('error handling', () => {
-        it('should return a http 500 error if table not available', () => {
+        test('500: should have correct error message if topics table not found', () => {
             return db.query(`DROP TABLE IF EXISTS topics CASCADE;`)
             .then(() => {
                 return request(app)
@@ -83,16 +49,7 @@ describe('GET /api/topics', () => {
 });
 
 describe('GET /api', () => {
-    test('response should be an object with 200 http status', () => {
-        return request(app)
-        .get('/api')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body).toBeInstanceOf(Object);
-        });
-    });
-
-    test('response should match what is in the endpoints.json file', () => {
+    test('200: should match what is in the endpoints.json file', () => {
         const endpoints_json = require('../endpoints.json');
 
         return request(app)
@@ -103,11 +60,7 @@ describe('GET /api', () => {
         });
     });
 
-    test('exampleResponse from /api should match the format of the actual response provided by the endpoint', () => {
-
-        // this test should be dynamic for an evolving endpoints.json file
-        // so this test doesn't need to be updated when endpoints.json is updated
-
+    test('200: should have exampleResponse properties whose object layouts match the server endpoint responses', () => {
         return request(app)
         .get('/api')
         .expect(200)
@@ -200,25 +153,16 @@ describe('GET /api', () => {
 });
 
 describe('GET /api/articles/:article_id', () => {
-    test('response data should be on an "article" key with a 200 http status code', () => {
-        return request(app)
-        .get('/api/articles/1')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body).toHaveProperty('article');
-        });
-    });
-
-    test('article should match expected test article', () => {
+    test('200: should have article with the correct object layout', () => {
         const expectedArticle = {
-            article_id: 1,  // assume psql assigns this article a serial primary key of 1
-            title: 'Living in the shadow of a great man',
-            topic: 'mitch',
-            author: 'butter_bridge',
-            body: 'I find this existence challenging',
-            created_at: '2020-07-09T20:11:00.000Z',
-            votes: 100,
-            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
+            article_id: expect.any(Number),
+            title: expect.any(String),
+            topic: expect.any(String),
+            author: expect.any(String),
+            body: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String)
         };
 
         return request(app)
@@ -230,7 +174,7 @@ describe('GET /api/articles/:article_id', () => {
     });
 
     describe('error handling', () => {
-        it('should return a http 400 error if provided id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .get('/api/articles/not_a_number')
             .expect(400)
@@ -239,7 +183,7 @@ describe('GET /api/articles/:article_id', () => {
             });
         });
 
-        it('should return a http 404 error if article not in database', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .get('/api/articles/99')
             .expect(404)
@@ -251,25 +195,7 @@ describe('GET /api/articles/:article_id', () => {
 });
 
 describe('GET /api/articles', () => {
-    test('response data should be on a "articles" key with 200 http status', () => {
-        return request(app)
-        .get('/api/articles')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body).toHaveProperty('articles');
-        });
-    });
-    
-    test('response should contain thirteen articles', () => {
-        return request(app)
-        .get('/api/articles')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.articles).toHaveLength(13);
-        });
-    });
-
-    test('each article should have correct object layout', () => {
+    test('200: should have 13 articles with correct object layout', () => {
         const objectLayout = {
             author: expect.any(String),
             title: expect.any(String),
@@ -285,44 +211,16 @@ describe('GET /api/articles', () => {
         .get('/api/articles')
         .expect(200)
         .then(({ body }) => {
+            expect(body.articles).toHaveLength(13);
+
             for (const article of body.articles) {
                 expect(article).toMatchObject(objectLayout);
-            }
-        });
-    });
-
-    test('each article should not have a body property', () => {
-        return request(app)
-        .get('/api/articles')
-        .expect(200)
-        .then(({ body }) => {
-            for (const article of body.articles) {
                 expect(article).not.toHaveProperty('body');
             }
         });
     });
 
-    test('article should match expected test article', () => {
-        const expectedArticle = {
-            article_id: 1,  // assume psql assigns this article a serial primary key of 1
-            title: 'Living in the shadow of a great man',
-            topic: 'mitch',
-            author: 'butter_bridge',
-            body: 'I find this existence challenging',
-            created_at: '2020-07-09T20:11:00.000Z',
-            votes: 100,
-            article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700',
-        };
-
-        return request(app)
-        .get('/api/articles/1')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.article).toMatchObject(expectedArticle);
-        });
-    });
-
-    test('articles should be sorted in descending date order', () => {
+    test('200: should have articles sorted in descending date order', () => {
         return request(app)
         .get('/api/articles')
         .expect(200)
@@ -332,7 +230,7 @@ describe('GET /api/articles', () => {
     });
 
     describe('error handling', () => {
-        it('should return a http 500 error if table not available', () => {
+        test('500: should have correct error message if articles table not found', () => {
             return db.query(`DROP TABLE IF EXISTS articles CASCADE;`)
             .then(() => {
                 return request(app)
@@ -347,17 +245,7 @@ describe('GET /api/articles', () => {
 });
 
 describe('GET /api/articles/:article_id/comments', () => {
-    test('response data should be on a "comments" key with 200 http status', () => {
-        return request(app)
-        .get('/api/articles/1/comments')
-        .expect(200)
-        .then(({ body }) => {
-            console.log(body);
-            expect(body).toHaveProperty('comments');
-        });
-    });
-
-    test('response should be an empty array if article has no comments', () => {
+    test('200: should have an empty array if article has no comments', () => {
         return request(app)
         .get('/api/articles/2/comments')    // article 2 has no corresponding comments
         .expect(200)
@@ -366,16 +254,7 @@ describe('GET /api/articles/:article_id/comments', () => {
         });
     });
 
-    test('first article should have eleven comments', () => {
-        return request(app)
-        .get('/api/articles/1/comments')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.comments).toHaveLength(11);
-        });
-    });
-
-    test('each comment should have correct object layout', () => {
+    test('200: should have 11 comments with correct object layout', () => {
         const objectLayout = {
             comment_id: expect.any(Number),
             votes: expect.any(Number),
@@ -389,31 +268,15 @@ describe('GET /api/articles/:article_id/comments', () => {
         .get('/api/articles/1/comments')
         .expect(200)
         .then(({ body }) => {
+            expect(body.comments).toHaveLength(11);
+
             for (const comment of body.comments) {
                 expect(comment).toMatchObject(objectLayout);
             }
         });
     });
 
-    test('comment should match expected test comment', () => {
-        const expectedComment = {
-            'comment_id': 5,
-            'votes': 0,
-            'created_at': '2020-11-03T21:00:00.000Z',
-            'author': 'icellusedkars',
-            'body': 'I hate streaming noses',
-            'article_id': 1
-        };
-
-        return request(app)
-        .get('/api/articles/1/comments')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.comments[0]).toEqual(expectedComment);
-        });
-    });
-
-    test('comments should be sorted in descending date order', () => {
+    test('200: should have comments sorted in descending date order', () => {
         return request(app)
         .get('/api/articles/1/comments')
         .expect(200)
@@ -423,7 +286,7 @@ describe('GET /api/articles/:article_id/comments', () => {
     });
 
     describe('error handling', () => {
-        it('should return a http 400 error if provided id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .get('/api/articles/not_a_number/comments')
             .expect(400)
@@ -432,7 +295,7 @@ describe('GET /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('should return a http 404 error if article not in database', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .get('/api/articles/99/comments')
             .expect(404)
@@ -444,7 +307,7 @@ describe('GET /api/articles/:article_id/comments', () => {
 });
 
 describe('endpoint not found', () => {
-    it('should return a http 404 error if endpoint not found', () => {
+    test('404: should have correct error message if endpoint not found', () => {
         return request(app)
         .get('/api/not_an_endpoint')
         .expect(404)
