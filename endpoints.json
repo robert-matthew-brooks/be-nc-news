@@ -53,5 +53,22 @@
         "article_id": 1
       }]
     }
+  },
+  "POST /api/articles/:article_id/comments": {
+    "description": "posts the new comment and responds with the posted comment",
+    "exampleRequest": {
+      "username": "butter_bridge",
+      "body": "test_body"
+    },
+    "exampleResponse": {
+      "comment": {
+        "comment_id": 19,
+        "body": "test_body",
+        "article_id": 1,
+        "author": "butter_bridge",
+        "votes": 0,
+        "created_at": "2023-06-28T11:14:35.157Z"
+      }
+    }
   }
 }

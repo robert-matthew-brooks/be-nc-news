@@ -1,8 +1,9 @@
 const db = require('../db/connection.js');
+const util = require('./util.js');
 
 function getComments(articleId) {
     if (!/[0-9]+/.test(articleId)) {
-        return Promise.reject({ status: 400, msg: 'invalid article id' });
+        return Promise.reject({ status: 400, msg: 'invalid article_id' });
     }
 
     const queryString = `
@@ -10,11 +11,8 @@ function getComments(articleId) {
         WHERE article_id = $1;
     `;
 
-    return db.query(queryString, [articleId])   // db query to check the article exists
-    .then(({ rows }) => {
-        if (rows.length === 0) {
-            return Promise.reject({ status: 404, msg: 'article not found' });
-        }
+    return util.checkInDatabase('articles', 'article_id', articleId)
+    .then(() => {
         
         const queryString = `
             SELECT
@@ -43,6 +41,38 @@ function getComments(articleId) {
     });
 }
 
+function postComment(articleId, username, body) {
+    if (!/[0-9]+/.test(articleId)) {
+        return Promise.reject({ status: 400, msg: 'invalid article_id' });
+    }
+    else if (!body) {
+        return Promise.reject({ status: 400, msg: 'invalid comment' });
+    }
+    else if (!username) {
+        return Promise.reject({ status: 400, msg: 'invalid username' });
+    }
+
+    return Promise.all([
+        util.checkInDatabase('articles', 'article_id', articleId),
+        util.checkInDatabase('users', 'username', username)
+    ])
+    .then(() => {
+        const queryString = `
+            INSERT INTO comments
+                (article_id, author, body) 
+            VALUES
+                ($1, $2, $3)
+            RETURNING *;
+        `;
+
+        return db.query(queryString, [articleId, username, body])
+    })
+    .then(({ rows }) => {
+        return rows[0];
+    })
+}
+
 module.exports = {
-    getComments
+    getComments,
+    postComment
 };

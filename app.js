@@ -7,6 +7,7 @@ const commentsController = require('./controllers/comments.controller.js');
 const errorHandlers = require('./error-handlers/error-handlers.js');
 
 const app = express();
+app.use(express.json());
 
 // api
 app.get('/api', apiController.getEndpointDetails);
@@ -20,6 +21,7 @@ app.get('/api/articles', articlesController.getArticles);
 
 // comments
 app.get('/api/articles/:article_id/comments', commentsController.getComments);
+app.post('/api/articles/:article_id/comments', commentsController.postComment)
 
 // endpoint not found
 app.all('*', (req, res, next) => {
