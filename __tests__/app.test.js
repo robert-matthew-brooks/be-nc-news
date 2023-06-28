@@ -310,9 +310,9 @@ describe('POST /api/articles/:article_id/comments', () => {
     const postCommentRequest = {
         username: 'butter_bridge',
         body: 'test_body'
-    }
+    };
 
-    test('201: should have comment should with correct object layout', () => {
+    test('201: should have comment with correct object layout', () => {
         const objectLayout = {
             comment_id: expect.any(Number),
             body: expect.any(String),
