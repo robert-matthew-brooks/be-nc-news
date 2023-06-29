@@ -22,7 +22,8 @@ app.patch('/api/articles/:article_id', articlesController.patchArticle);
 
 // comments
 app.get('/api/articles/:article_id/comments', commentsController.getComments);
-app.post('/api/articles/:article_id/comments', commentsController.postComment)
+app.post('/api/articles/:article_id/comments', commentsController.postComment);
+app.delete('/api/comments/:comment_id', commentsController.deleteComment);
 
 // endpoint not found
 app.all('*', (req, res, next) => {

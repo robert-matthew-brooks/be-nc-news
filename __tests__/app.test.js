@@ -1,10 +1,9 @@
 const request = require('supertest');
 
-const fs = require('fs/promises');
 const app = require('../app.js');
-const data = require('../db/data/test-data/index.js');
-const seed = require('../db/seeds/seed.js');
 const db = require('../db/connection.js');
+const seed = require('../db/seeds/seed.js');
+const data = require('../db/data/test-data/index.js');
 
 beforeEach(() => {
     return seed(data);
@@ -142,9 +141,11 @@ describe('GET /api', () => {
                     // iterate through all keys of endpoint response element
                     // confirm the example does contain the required key with matching data type
                     
-                    for(const key of Object.keys(element)) {
-                        expect(response.example).toHaveProperty(key);
-                        expect(typeof response.example[key]).toBe(typeof element[key]);
+                    if (element) {
+                        for(const key of Object.keys(element)) {
+                            expect(response.example).toHaveProperty(key);
+                            expect(typeof response.example[key]).toBe(typeof element[key]);
+                        }
                     }
                 }
             }
@@ -592,6 +593,51 @@ describe('PATCH /api/articles/:article_id', () => {
             .expect(400)
             .then(({ body }) => {
                 expect(body.msg).toBe('invalid vote');
+            });
+        });
+    });
+});
+
+describe('DELETE /api/comments/:comment_id', () => {
+    test('204: should have no content', () => {
+        return request(app)
+        .delete('/api/comments/1')
+        .expect(204)
+        .then(({ body }) => {
+            expect(body).toBeEmpty();
+        });
+    });
+
+    test('number of comments should decrease by one after successful deletion', () => {
+        return request(app)
+        .delete('/api/comments/5')  // comment 5 refers to article 1
+        .expect(204)
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200);
+        })
+        .then(({ body }) => {
+            expect(body.comments.length).toBe(10);  // starts with 11 comments
+        });
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if comment_id is not a number', () => {
+            return request(app)
+            .delete('/api/comments/not_a_number')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid text representation');
+            });
+        });
+
+        test('404: should have correct error message if comment_id not found', () => {
+            return request(app)
+            .delete('/api/comments/99')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('comment_id not found');
             });
         });
     });

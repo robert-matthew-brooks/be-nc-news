@@ -21,7 +21,18 @@ function postComment(req, res, next) {
     .catch(next);
 }
 
+function deleteComment(req, res, next) {
+    const { comment_id } = req.params;
+
+    commentsModels.deleteComment(comment_id)
+    .then(() => {
+        res.status(204).send();
+    })
+    .catch(next);
+}
+
 module.exports = {
     getComments,
-    postComment
+    postComment,
+    deleteComment
 };

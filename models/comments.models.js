@@ -54,7 +54,20 @@ function postComment(article_id, username, body) {
     })
 }
 
+function deleteComment(comment_id) {
+    return util.checkInDatabase('comments', 'comment_id', comment_id)
+    .then(() => {
+        const queryString = `
+            DELETE FROM comments
+            WHERE comment_id = $1;
+        `;
+        
+        return db.query(queryString, [comment_id]);
+    });
+}
+
 module.exports = {
     getComments,
-    postComment
+    postComment,
+    deleteComment
 };
