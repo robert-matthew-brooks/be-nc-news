@@ -2,10 +2,6 @@ const db = require('../db/connection.js');
 const util = require('./util.js');
 
 function getComments(article_id) {
-    if (!/[0-9]+/.test(article_id)) {
-        return Promise.reject({ status: 400, msg: 'invalid article_id' });
-    }
-
     const queryString = `
         SELECT * FROM articles
         WHERE article_id = $1;
@@ -36,19 +32,11 @@ function getComments(article_id) {
 }
 
 function postComment(article_id, username, body) {
-    if (!/[0-9]+/.test(article_id)) {
-        return Promise.reject({ status: 400, msg: 'invalid article_id' });
-    }
-    else if (!body) {
-        return Promise.reject({ status: 400, msg: 'invalid comment' });
-    }
-    else if (!username) {
-        return Promise.reject({ status: 400, msg: 'invalid username' });
-    }
+    if (!body) return Promise.reject({ status: 400, msg: 'invalid comment' });
+    if (!username) return Promise.reject({ status: 400, msg: 'invalid username' });
 
     return Promise.all([
         util.checkInDatabase('articles', 'article_id', article_id),
-        util.checkInDatabase('users', 'username', username)
     ])
     .then(() => {
         const queryString = `

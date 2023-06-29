@@ -6,11 +6,24 @@ function appErrorHandler(err, req, res, next) {
 }
 
 function psqlErrorHandler(err, req, res, next) {
+
+    // table not found
     if (err.code === '42P01') {
-        res.status(500).send({ msg: `table not found` });
+        res.status(500).send({ msg: 'undefined table' });
     }
+
+    // trying to use a string where psql is not expecting a string
+    else if (err.code === '22P02') {
+        res.status(400).send({ msg: 'invalid text representation' });
+    }
+
+    // foreign key not found
+    else if (err.code === '23503') {
+        res.status(400).send({ msg: 'foreign key violation' });
+    }
+
     else if (err.code) {
-        res.status(500).send({ msg: `unhandled psql error: ${err.code}` });
+        res.status(500).send({ msg: `unhandled psql error: ${err.code} - ${err.detail}` });
     }
     else next(err);
 }
