@@ -1,5 +1,5 @@
-const db = require('../db/connection.js');
 const format = require('pg-format');
+const db = require('../db/connection.js');
 
 function checkInDatabase(table, column, value) {
     const queryString = format(`
