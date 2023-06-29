@@ -1,8 +1,8 @@
 const db = require('../db/connection.js');
 const util = require('./util.js');
 
-function getComments(articleId) {
-    if (!/[0-9]+/.test(articleId)) {
+function getComments(article_id) {
+    if (!/[0-9]+/.test(article_id)) {
         return Promise.reject({ status: 400, msg: 'invalid article_id' });
     }
 
@@ -11,38 +11,32 @@ function getComments(articleId) {
         WHERE article_id = $1;
     `;
 
-    return util.checkInDatabase('articles', 'article_id', articleId)
+    return util.checkInDatabase('articles', 'article_id', article_id)
     .then(() => {
         
         const queryString = `
-            SELECT
-                comments.comment_id,
-                comments.votes,
-                comments.created_at,
-                comments.author,
-                comments.body,
-                comments.article_id 
-            FROM
-                articles
-            JOIN
-                comments
-            ON
-                articles.article_id = comments.article_id
-            WHERE
-                comments.article_id = $1
-            ORDER BY
-                comments.created_at DESC;
+            SELECT comments.comment_id,
+                   comments.votes,
+                   comments.created_at,
+                   comments.author,
+                   comments.body,
+                   comments.article_id 
+            FROM articles
+            JOIN comments
+            ON articles.article_id = comments.article_id
+            WHERE comments.article_id = $1
+            ORDER BY comments.created_at DESC;
         `;
 
-        return db.query(queryString, [articleId])
+        return db.query(queryString, [article_id])
     })
     .then(({ rows }) => {
         return rows;
     });
 }
 
-function postComment(articleId, username, body) {
-    if (!/[0-9]+/.test(articleId)) {
+function postComment(article_id, username, body) {
+    if (!/[0-9]+/.test(article_id)) {
         return Promise.reject({ status: 400, msg: 'invalid article_id' });
     }
     else if (!body) {
@@ -53,7 +47,7 @@ function postComment(articleId, username, body) {
     }
 
     return Promise.all([
-        util.checkInDatabase('articles', 'article_id', articleId),
+        util.checkInDatabase('articles', 'article_id', article_id),
         util.checkInDatabase('users', 'username', username)
     ])
     .then(() => {
@@ -65,7 +59,7 @@ function postComment(articleId, username, body) {
             RETURNING *;
         `;
 
-        return db.query(queryString, [articleId, username, body])
+        return db.query(queryString, [article_id, username, body])
     })
     .then(({ rows }) => {
         return rows[0];
