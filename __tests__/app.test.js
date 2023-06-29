@@ -250,7 +250,7 @@ describe('GET /api/articles/:article_id/comments', () => {
         .get('/api/articles/2/comments')    // article 2 has no corresponding comments
         .expect(200)
         .then(({ body }) => {
-            expect(body.comments).toEqual([]);
+            expect(body.comments).toBeEmpty();
         });
     });
 

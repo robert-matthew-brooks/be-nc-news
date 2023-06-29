@@ -1,9 +1,9 @@
 const articlesModels = require('../models/articles.models.js');
 
 function getArticle(req, res, next) {
-    const articleId = req.params.article_id;
+    const { article_id } = req.params;
     
-    articlesModels.getArticle(articleId)
+    articlesModels.getArticle(article_id)
     .then(article => {
         res.status(200).send({ article });
     })
