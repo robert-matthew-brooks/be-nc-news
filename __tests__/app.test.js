@@ -465,6 +465,119 @@ describe('POST /api/articles/:article_id/comments', () => {
     });
 });
 
+describe('PATCH /api/articles/:article_id', () => {
+    test('200: should have updated article with correct object layout', () => {
+        const objectLayout = {
+            article_id: expect.any(Number),
+            title: expect.any(String),
+            topic: expect.any(String),
+            author: expect.any(String),
+            body: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String)
+        };
+
+        return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 1 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(objectLayout);
+        });
+    });
+
+    test('number of votes should increase by specified amount', () => {
+        let votes;
+
+        return request(app)
+        .get('/api/articles/1')
+        .expect(200)
+        .then(({ body }) => {
+            votes = body.article.votes;
+
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 1 }) // add one vote
+            .expect(200)
+        })
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(votes + 1);  // check one vote added
+
+            votes = body.article.votes;
+
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: -200 })  // subtract 200 votes
+            .expect(200)
+        })
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(votes - 200);    // check 200 votes subtracted
+        });
+    });
+
+    describe('error handling', () => {
+        it('400: should have correct error message if article_id is not a number', () => {
+            return request(app)
+            .patch('/api/articles/not_a_number')
+            .send({ inc_votes: 1 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid article_id');
+            });
+        });
+
+        it('404: should have correct error message if article_id not found', () => {
+            return request(app)
+            .patch('/api/articles/99')
+            .send({ inc_votes: 1 })
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('article_id not found');
+            });
+        });
+
+        it('400: should have correct error message if no request is sent', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid vote');
+            });
+        });
+
+        it('400: should have correct error message if inc_vote is not a number', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 'one' })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid vote');
+            });
+        });
+
+        it('400: should have correct error message if inc_vote is 0', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 0 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid vote');
+            });
+        });
+    });
+});
+
 describe('endpoint not found', () => {
     test('404: should have correct error message if endpoint not found', () => {
         return request(app)
