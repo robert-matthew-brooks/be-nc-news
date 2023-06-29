@@ -742,6 +742,7 @@ describe('GET /api/articles (queries)', () => {
             .get('/api/users')
         })
         .then(({ body }) => {
+            expect(body.msg).not.toBe('undefined table');
             expect(body.users).toBeDefined();
         });
     });

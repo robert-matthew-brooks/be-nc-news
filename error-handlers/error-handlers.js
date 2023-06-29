@@ -25,7 +25,7 @@ function psqlErrorHandler(err, req, res, next) {
 }
 
 function serverErrorHandler(err, req, res, next) {
-    res.status(500).send({ msg: 'unhandled internal server error' });
+    res.status(500).send({ msg: `unhandled internal server error: ${err}` });
 }
 
 module.exports = {
