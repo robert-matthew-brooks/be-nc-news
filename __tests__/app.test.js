@@ -42,7 +42,7 @@ describe('GET /api/topics', () => {
                 .expect(500)
             })
             .then(({ body }) => {
-                expect(body.msg).toBe('table not found');
+                expect(body.msg).toBe('undefined table');
             });
         });
     });
@@ -179,7 +179,7 @@ describe('GET /api/articles/:article_id', () => {
             .get('/api/articles/not_a_number')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid article_id');
+                expect(body.msg).toBe('invalid text representation');
             });
         });
 
@@ -238,7 +238,7 @@ describe('GET /api/articles', () => {
                 .expect(500)
             })
             .then(({ body }) => {
-                expect(body.msg).toBe('table not found');
+                expect(body.msg).toBe('undefined table');
             });
         });
     });
@@ -291,7 +291,7 @@ describe('GET /api/articles/:article_id/comments', () => {
             .get('/api/articles/not_a_number/comments')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid article_id');
+                expect(body.msg).toBe('invalid text representation');
             });
         });
 
@@ -367,7 +367,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             .send(postCommentRequest)
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid article_id');
+                expect(body.msg).toBe('invalid text representation');
             });
         });
 
@@ -419,7 +419,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('404: should have correct error message if username not found', () => {
+        it('400: should have correct error message if username not found', () => {
             const unknownUsername = {
                 username: 'not_a_username',
                 body: 'test_body'
@@ -428,9 +428,9 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(unknownUsername)
-            .expect(404)
+            .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('username not found');
+                expect(body.msg).toBe('foreign key violation');
             });
         });
 
@@ -460,6 +460,138 @@ describe('POST /api/articles/:article_id/comments', () => {
             .expect(400)
             .then(({ body }) => {
                 expect(body.msg).toBe('invalid comment');
+            });
+        });
+    });
+});
+
+describe('PATCH /api/articles/:article_id', () => {
+    test('200: should have updated article with correct object layout', () => {
+        const objectLayout = {
+            article_id: expect.any(Number),
+            title: expect.any(String),
+            topic: expect.any(String),
+            author: expect.any(String),
+            body: expect.any(String),
+            created_at: expect.any(String),
+            votes: expect.any(Number),
+            article_img_url: expect.any(String)
+        };
+
+        return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 1 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.article).toMatchObject(objectLayout);
+        });
+    });
+
+    test('addition of votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 1 }) // add one vote
+        .expect(200)
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(101);  // check one vote was added
+        });
+    });
+
+    test('subtraction votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: -1 }) // remove one vote
+        .expect(200)
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(99);  // check one vote was removed
+        });
+    });
+
+    test('consecutive changes to the votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/articles/1')
+        .send({ inc_votes: 10 }) // add ten votes
+        .expect(200)
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(110);  // check ten votes were added
+
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: -200 })  // subtract 200 votes
+            .expect(200)
+        })
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1')
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.article.votes).toBe(-90);    // check 200 votes subtracted
+        });
+    });
+
+    describe('error handling', () => {
+        it('400: should have correct error message if article_id is not a number', () => {
+            return request(app)
+            .patch('/api/articles/not_a_number')
+            .send({ inc_votes: 1 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid text representation');
+            });
+        });
+
+        it('404: should have correct error message if article_id not found', () => {
+            return request(app)
+            .patch('/api/articles/99')
+            .send({ inc_votes: 1 })
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('article_id not found');
+            });
+        });
+
+        it('400: should have correct error message if no request is sent', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid vote');
+            });
+        });
+
+        it('400: should have correct error message if inc_vote is not a number', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 'one' })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid text representation');
+            });
+        });
+
+        it('400: should have correct error message if inc_vote is 0', () => {
+            return request(app)
+            .patch('/api/articles/1')
+            .send({ inc_votes: 0 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid vote');
             });
         });
     });

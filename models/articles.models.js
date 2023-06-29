@@ -1,10 +1,7 @@
 const db = require('../db/connection.js');
+const util = require('./util.js');
 
 function getArticle(article_id) {
-    if (!/[0-9]+/.test(article_id)) {
-        return Promise.reject({ status: 400, msg: 'invalid article_id' });
-    }
-
     const queryString = `
         SELECT * FROM articles
         WHERE article_id = $1;
@@ -41,7 +38,29 @@ function getArticles() {
     });
 }
 
+function patchArticle(article_id, inc_votes) {
+    if (!inc_votes) {
+        return Promise.reject({ status: 400, msg: 'invalid vote' });
+    }
+
+    return util.checkInDatabase('articles', 'article_id', article_id)
+    .then(() => {
+        const queryString = `
+            UPDATE articles
+            SET votes = votes + $2
+            WHERE article_id = $1
+            RETURNING *;
+        `;
+
+        return db.query(queryString, [article_id, inc_votes]);
+    })
+    .then(({ rows }) => {
+        return rows[0];
+    });
+}
+
 module.exports = {
     getArticle,
-    getArticles
+    getArticles,
+    patchArticle
 };
