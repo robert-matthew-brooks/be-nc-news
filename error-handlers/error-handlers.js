@@ -19,7 +19,7 @@ function psqlErrorHandler(err, req, res, next) {
     }
 
     else if (err.code) {
-        res.status(500).send({ msg: `unhandled psql error: ${err.code} - ${err.detail}` });
+        res.status(500).send({ msg: `unhandled psql error: ${err}` });
     }
     else next(err);
 }

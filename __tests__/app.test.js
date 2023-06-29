@@ -69,9 +69,9 @@ describe('GET /api', () => {
 
             for (const endpoint in endpoints) {
                 if (endpoint !== 'GET /api') {
-                    const method = endpoint.split(' ')[0];
+                    const method = endpoint.substring(0, endpoint.indexOf(' '));
                     const url = endpoint
-                        .split(' ')[1]
+                        .substring(endpoint.indexOf(' ')+1)
                         .replaceAll(/:[\w\d]+(?=$|\/)/g, '1');
                     
                     const exampleResponse = endpoints[endpoint].exampleResponse;
@@ -337,7 +337,7 @@ describe('POST /api/articles/:article_id/comments', () => {
     });
 
     describe('error handling', () => {
-        it('400: should have correct error message if article_id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .post('/api/articles/not_a_number/comments')
             .send(postCommentRequest)
@@ -347,7 +347,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('404: should have correct error message if article_id not found', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .post('/api/articles/99/comments')
             .send(postCommentRequest)
@@ -357,7 +357,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if no request is sent', () => {
+        test('400: should have correct error message if no request is sent', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .expect(400)
@@ -366,7 +366,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if username is blank', () => {
+        test('400: should have correct error message if username is blank', () => {
             const blankUsername = {
                 username: '',
                 body: 'test_body'
@@ -381,7 +381,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if username is missing', () => {
+        test('400: should have correct error message if username is missing', () => {
             const noUsername = {
                 body: 'test_body'
             }
@@ -395,7 +395,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if username not found', () => {
+        test('400: should have correct error message if username not found', () => {
             const unknownUsername = {
                 username: 'not_a_username',
                 body: 'test_body'
@@ -410,7 +410,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if message body is blank', () => {
+        test('400: should have correct error message if message body is blank', () => {
             const blankBody = {
                 username: 'butter_bridge',
                 body: ''
@@ -425,7 +425,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if message body is missing', () => {
+        test('400: should have correct error message if message body is missing', () => {
             const noBody = {
                 username: 'butter_bridge',
             }
@@ -522,7 +522,7 @@ describe('PATCH /api/articles/:article_id', () => {
     });
 
     describe('error handling', () => {
-        it('400: should have correct error message if article_id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .patch('/api/articles/not_a_number')
             .send({ inc_votes: 1 })
@@ -532,7 +532,7 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('404: should have correct error message if article_id not found', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .patch('/api/articles/99')
             .send({ inc_votes: 1 })
@@ -542,16 +542,16 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('400: should have correct error message if no request is sent', () => {
+        test('400: should have correct error message if no request is sent', () => {
             return request(app)
             .patch('/api/articles/1')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid vote');
+                expect(body.msg).toBe('invalid inc_votes');
             });
         });
 
-        it('400: should have correct error message if inc_vote is not a number', () => {
+        test('400: should have correct error message if inc_vote is not a number', () => {
             return request(app)
             .patch('/api/articles/1')
             .send({ inc_votes: 'one' })
@@ -561,13 +561,13 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('400: should have correct error message if inc_vote is 0', () => {
+        test('400: should have correct error message if inc_vote is 0', () => {
             return request(app)
             .patch('/api/articles/1')
             .send({ inc_votes: 0 })
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid vote');
+                expect(body.msg).toBe('invalid inc_votes');
             });
         });
     });
@@ -685,15 +685,6 @@ describe('GET /api/articles (queries)', () => {
             expect(body.articles[0].topic).toBe('cats');
         });
     });
-    
-    test('200: should have an empty array when filtered by topic "not_a_topic"', () => {
-        return request(app)
-        .get('/api/articles?topic=not_a_topic')
-        .expect(200)
-        .then(({ body }) => {
-            expect(body.articles).toBeEmpty();
-        });
-    });
 
     test('200: should have articles sorted in descending author order (when order is specified)', () => {
         return request(app)
@@ -743,6 +734,18 @@ describe('GET /api/articles (queries)', () => {
         });
     });
 
+    test('should not be vulnerable to sql injection in the topic value', () => {
+        return request(app)
+        .get("/api/articles/?topic='group by articles.article_id;drop table users cascade;select * from articles--")
+        .then(() => {
+            return request(app)
+            .get('/api/users')
+        })
+        .then(({ body }) => {
+            expect(body.users).toBeDefined();
+        });
+    });
+
     describe('error handling', () => {
         test('400: should have correct error message if topic is missing', () => {
             return request(app)
@@ -750,6 +753,15 @@ describe('GET /api/articles (queries)', () => {
             .expect(400)
             .then(({ body }) => {
                 expect(body.msg).toBe('invalid topic');
+            });
+        });
+
+        test('404: should have correct error message when topic is invalid', () => {
+            return request(app)
+            .get('/api/articles?topic=not_a_topic')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('slug not found');
             });
         });
 
