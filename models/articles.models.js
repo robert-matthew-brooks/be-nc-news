@@ -2,7 +2,7 @@ const db = require('../db/connection.js');
 
 function getArticle(articleId) {
     if (!/[0-9]+/.test(articleId)) {
-        return Promise.reject({ status: 400, msg: 'invalid article id' });
+        return Promise.reject({ status: 400, msg: 'invalid article_id' });
     }
 
     const queryString = `
@@ -13,7 +13,7 @@ function getArticle(articleId) {
     return db.query(queryString, [articleId])
     .then(({ rows }) => {
         if (rows.length === 0) {
-            return Promise.reject({ status: 404, msg: 'article not found' });
+            return Promise.reject({ status: 404, msg: 'article_id not found' });
         }
         
         return rows[0];

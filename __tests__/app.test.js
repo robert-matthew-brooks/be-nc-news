@@ -179,7 +179,7 @@ describe('GET /api/articles/:article_id', () => {
             .get('/api/articles/not_a_number')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid article id');
+                expect(body.msg).toBe('invalid article_id');
             });
         });
 
@@ -188,7 +188,7 @@ describe('GET /api/articles/:article_id', () => {
             .get('/api/articles/99')
             .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('article not found');
+                expect(body.msg).toBe('article_id not found');
             });
         });
     });
@@ -291,7 +291,7 @@ describe('GET /api/articles/:article_id/comments', () => {
             .get('/api/articles/not_a_number/comments')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid article id');
+                expect(body.msg).toBe('invalid article_id');
             });
         });
 
@@ -300,7 +300,166 @@ describe('GET /api/articles/:article_id/comments', () => {
             .get('/api/articles/99/comments')
             .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('article not found');
+                expect(body.msg).toBe('article_id not found');
+            });
+        });
+    });
+});
+
+describe('POST /api/articles/:article_id/comments', () => {
+    const postCommentRequest = {
+        username: 'butter_bridge',
+        body: 'test_body'
+    };
+
+    test('201: should have comment with correct object layout', () => {
+        const objectLayout = {
+            comment_id: expect.any(Number),
+            body: expect.any(String),
+            article_id: expect.any(Number),
+            author: expect.any(String),
+            votes: expect.any(Number),
+            created_at: expect.any(String),
+        };
+
+        return request(app)
+        .post('/api/articles/1/comments')
+        .send(postCommentRequest)
+        .expect(201)
+        .then(({ body }) => {
+            expect(body.comment).toMatchObject(objectLayout);
+            expect(body.comment.author).toBe(postCommentRequest.username);
+            expect(body.comment.body).toBe(postCommentRequest.body);
+        });
+    });
+    
+    test('number of comments should increase by one after successful post', () => {
+        let commentsBefore;
+        let commentsAfter;
+
+        return request(app)
+        .get('/api/articles/1/comments')
+        .expect(200)
+        .then(({ body }) => {
+            commentsBefore = body.comments.length;
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(postCommentRequest)
+            .expect(201);
+        })
+        .then(() => {
+            return request(app)
+            .get('/api/articles/1/comments')
+            .expect(200);
+        })
+        .then(({ body }) => {
+            commentsAfter = body.comments.length;
+            
+            expect(commentsAfter).toBe(commentsBefore + 1);
+        });
+    });
+
+    describe('error handling', () => {
+        it('400: should have correct error message if article_id is not a number', () => {
+            return request(app)
+            .post('/api/articles/not_a_number/comments')
+            .send(postCommentRequest)
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid article_id');
+            });
+        });
+
+        it('404: should have correct error message if article_id not found', () => {
+            return request(app)
+            .post('/api/articles/99/comments')
+            .send(postCommentRequest)
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('article_id not found');
+            });
+        });
+
+        it('400: should have correct error message if no request is sent', () => {
+            return request(app)
+            .post('/api/articles/1/comments')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid comment');
+            });
+        });
+
+        it('400: should have correct error message if username is blank', () => {
+            const blankUsername = {
+                username: '',
+                body: 'test_body'
+            }
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(blankUsername)
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid username');
+            });
+        });
+
+        it('400: should have correct error message if username is missing', () => {
+            const noUsername = {
+                body: 'test_body'
+            }
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(noUsername)
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid username');
+            });
+        });
+
+        it('404: should have correct error message if username not found', () => {
+            const unknownUsername = {
+                username: 'not_a_username',
+                body: 'test_body'
+            }
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(unknownUsername)
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('username not found');
+            });
+        });
+
+        it('400: should have correct error message if message body is blank', () => {
+            const blankBody = {
+                username: 'butter_bridge',
+                body: ''
+            }
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(blankBody)
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid comment');
+            });
+        });
+
+        it('400: should have correct error message if message body is missing', () => {
+            const noBody = {
+                username: 'butter_bridge',
+            }
+
+            return request(app)
+            .post('/api/articles/1/comments')
+            .send(noBody)
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid comment');
             });
         });
     });
