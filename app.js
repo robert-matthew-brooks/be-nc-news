@@ -9,29 +9,23 @@ const errorHandlers = require('./error-handlers/error-handlers.js');
 const app = express();
 app.use(express.json());
 
-// api
 app.get('/api', apiController.getEndpointDetails);
 
-// topics
 app.get('/api/topics', topicsController.getTopics);
 
-// articles
 app.get('/api/articles/:article_id', articlesController.getArticle);
 app.get('/api/articles', articlesController.getArticles);
 app.patch('/api/articles/:article_id', articlesController.patchArticle);
 
-// comments
 app.get('/api/articles/:article_id/comments', commentsController.getComments);
 app.post('/api/articles/:article_id/comments', commentsController.postComment);
 app.delete('/api/comments/:comment_id', commentsController.deleteComment);
 
-// endpoint not found
 app.all('*', (req, res, next) => {
     const err = { status: 404, msg: 'endpoint not found' };
     next(err, req, res, next);
 })
 
-// errors
 app.use(errorHandlers.appErrorHandler);
 app.use(errorHandlers.psqlErrorHandler);
 app.use(errorHandlers.serverErrorHandler);
