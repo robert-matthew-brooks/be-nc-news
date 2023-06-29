@@ -64,33 +64,21 @@ describe('GET /api', () => {
         .get('/api')
         .expect(200)
         .then(({ body }) => {
-
-            // get list of endpoints from /api
-            
             const endpoints = body;
             const supertestRequests = [];
 
             for (const endpoint in endpoints) {
                 if (endpoint !== 'GET /api') {
-
-                    // extract METHOD and URL from each endpoint
-
                     const method = endpoint.split(' ')[0];
                     const url = endpoint
                         .split(' ')[1]
-                        .replaceAll(/:[\w\d]+(?=$|\/)/g, '1');     // (account for parametric endpoints - SQL serials, replace with 1)
-
-                    // extract the /api example response
-
+                        .replaceAll(/:[\w\d]+(?=$|\/)/g, '1');
+                    
                     const exampleResponse = endpoints[endpoint].exampleResponse;
                     const exampleRequest = endpoints[endpoint].exampleRequest;
 
-                    // also extract the key the response array is assigned to
-
                     const wrapperKey = Object.keys(exampleResponse)[0];
 
-                    // make supertest requests to all endpoints (varying depening on METHOD)
-                    
                     let pendingRequest;
                     
                     if (method === 'GET') {
@@ -106,13 +94,10 @@ describe('GET /api', () => {
                         pendingRequest = request(app).delete(url).send(exampleRequest).expect(204);
                     }
                     
-                    // store the server response data as promise (alongside /api example response to compare to)
-                    // ...so all endpoint responses can be passed to next promise chain step together
-
                     const dataElements = new Promise((resolve, reject) => {
                         pendingRequest.then(({ body }) => {
                             let elements = body[wrapperKey];
-                            if (!Array.isArray(elements)) elements = [elements];    // (account for requests not coming back as array, eg single item from database)
+                            if (!Array.isArray(elements)) elements = [elements];
 
                             let example = exampleResponse[wrapperKey];
                             if (Array.isArray(example)) example = example[0];
@@ -129,18 +114,8 @@ describe('GET /api', () => {
             return Promise.all(supertestRequests);
         })
         .then(supertestResponses => {
-            
-            // iterate through server responses for each endpoint
-            
             for (const response of supertestResponses) {
-                
-                // iterate through all elements in response array, compare them to example
-
                 for (const element of response.elements) {
-
-                    // iterate through all keys of endpoint response element
-                    // confirm the example does contain the required key with matching data type
-                    
                     if (element) {
                         for(const key of Object.keys(element)) {
                             expect(response.example).toHaveProperty(key);
@@ -248,7 +223,7 @@ describe('GET /api/articles', () => {
 describe('GET /api/articles/:article_id/comments', () => {
     test('200: should have an empty array if article has no comments', () => {
         return request(app)
-        .get('/api/articles/2/comments')    // article 2 has no corresponding comments
+        .get('/api/articles/2/comments')
         .expect(200)
         .then(({ body }) => {
             expect(body.comments).toBeEmpty();
@@ -491,7 +466,7 @@ describe('PATCH /api/articles/:article_id', () => {
     test('addition of votes should be recorded correctly', () => {
         return request(app)
         .patch('/api/articles/1')
-        .send({ inc_votes: 1 }) // add one vote
+        .send({ inc_votes: 1 })
         .expect(200)
         .then(() => {
             return request(app)
@@ -499,14 +474,14 @@ describe('PATCH /api/articles/:article_id', () => {
             .expect(200)
         })
         .then(({ body }) => {
-            expect(body.article.votes).toBe(101);  // check one vote was added
+            expect(body.article.votes).toBe(101);
         });
     });
 
     test('subtraction votes should be recorded correctly', () => {
         return request(app)
         .patch('/api/articles/1')
-        .send({ inc_votes: -1 }) // remove one vote
+        .send({ inc_votes: -1 })
         .expect(200)
         .then(() => {
             return request(app)
@@ -514,14 +489,14 @@ describe('PATCH /api/articles/:article_id', () => {
             .expect(200)
         })
         .then(({ body }) => {
-            expect(body.article.votes).toBe(99);  // check one vote was removed
+            expect(body.article.votes).toBe(99);
         });
     });
 
     test('consecutive changes to the votes should be recorded correctly', () => {
         return request(app)
         .patch('/api/articles/1')
-        .send({ inc_votes: 10 }) // add ten votes
+        .send({ inc_votes: 10 })
         .expect(200)
         .then(() => {
             return request(app)
@@ -529,11 +504,11 @@ describe('PATCH /api/articles/:article_id', () => {
             .expect(200)
         })
         .then(({ body }) => {
-            expect(body.article.votes).toBe(110);  // check ten votes were added
+            expect(body.article.votes).toBe(110);
 
             return request(app)
             .patch('/api/articles/1')
-            .send({ inc_votes: -200 })  // subtract 200 votes
+            .send({ inc_votes: -200 })
             .expect(200)
         })
         .then(() => {
@@ -542,7 +517,7 @@ describe('PATCH /api/articles/:article_id', () => {
             .expect(200)
         })
         .then(({ body }) => {
-            expect(body.article.votes).toBe(-90);    // check 200 votes subtracted
+            expect(body.article.votes).toBe(-90);
         });
     });
 
@@ -610,7 +585,7 @@ describe('DELETE /api/comments/:comment_id', () => {
 
     test('number of comments should decrease by one after successful deletion', () => {
         return request(app)
-        .delete('/api/comments/5')  // comment 5 refers to article 1
+        .delete('/api/comments/5')
         .expect(204)
         .then(() => {
             return request(app)
@@ -618,7 +593,7 @@ describe('DELETE /api/comments/:comment_id', () => {
             .expect(200);
         })
         .then(({ body }) => {
-            expect(body.comments.length).toBe(10);  // starts with 11 comments
+            expect(body.comments.length).toBe(10);
         });
     });
 
@@ -638,6 +613,41 @@ describe('DELETE /api/comments/:comment_id', () => {
             .expect(404)
             .then(({ body }) => {
                 expect(body.msg).toBe('comment_id not found');
+            });
+        });
+    });
+});
+
+describe('GET /api/users', () => {
+    test('200: should have 4 users with correct object layout', () => {
+        const objectLayout = {
+            username: expect.any(String),
+            name: expect.any(String),
+            avatar_url: expect.any(String)
+        };
+
+        return request(app)
+        .get('/api/users')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.users).toHaveLength(4);
+
+            for (const user of body.users) {
+                expect(user).toMatchObject(objectLayout);
+            }
+        });
+    });
+
+    describe('error handling', () => {
+        test('500: should have correct error message if users table not found', () => {
+            return db.query(`DROP TABLE IF EXISTS users CASCADE;`)
+            .then(() => {
+                return request(app)
+                .get('/api/users')
+                .expect(500)
+            })
+            .then(({ body }) => {
+                expect(body.msg).toBe('undefined table');
             });
         });
     });
