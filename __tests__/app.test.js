@@ -618,6 +618,41 @@ describe('DELETE /api/comments/:comment_id', () => {
     });
 });
 
+describe('GET /api/users', () => {
+    test('200: should have 4 users with correct object layout', () => {
+        const objectLayout = {
+            username: expect.any(String),
+            name: expect.any(String),
+            avatar_url: expect.any(String)
+        };
+
+        return request(app)
+        .get('/api/users')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.users).toHaveLength(4);
+
+            for (const user of body.users) {
+                expect(user).toMatchObject(objectLayout);
+            }
+        });
+    });
+
+    describe('error handling', () => {
+        test('500: should have correct error message if users table not found', () => {
+            return db.query(`DROP TABLE IF EXISTS users CASCADE;`)
+            .then(() => {
+                return request(app)
+                .get('/api/users')
+                .expect(500)
+            })
+            .then(({ body }) => {
+                expect(body.msg).toBe('undefined table');
+            });
+        });
+    });
+});
+
 describe('endpoint not found', () => {
     test('404: should have correct error message if endpoint not found', () => {
         return request(app)
