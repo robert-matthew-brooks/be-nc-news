@@ -1,3 +1,4 @@
+const format = require('pg-format');
 const db = require('../db/connection.js');
 const util = require('./util.js');
 
@@ -17,8 +18,22 @@ function getArticle(article_id) {
     });
 }
 
-function getArticles() {
-    return db.query(`
+function getArticles(topic = '%', sort_by = 'date', order = 'DESC') {
+    topic = topic.toLowerCase();
+    sort_by = sort_by.toLowerCase();
+    if (sort_by === 'date') sort_by = 'created_at';
+    order = order.toUpperCase();
+
+    const allowedQueries = {
+        sort_by: ['author', 'title', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count'],
+        order: ['ASC', 'DESC']
+    };
+
+    if (!topic) return Promise.reject({ status: 400, msg: 'invalid topic'});
+    if (!allowedQueries.sort_by.includes(sort_by)) return Promise.reject({ status: 400, msg: 'invalid sort_by'});
+    if (!allowedQueries.order.includes(order)) return Promise.reject({ status: 400, msg: 'invalid order'});
+
+    const queryString = `
         SELECT articles.author,
                articles.title,
                articles.article_id,
@@ -30,9 +45,12 @@ function getArticles() {
         FROM articles
         LEFT OUTER JOIN comments
         ON articles.article_id = comments.article_id
+        WHERE lower(articles.topic) LIKE $1
         GROUP BY articles.article_id
-        ORDER BY articles.created_at DESC;
-    `)
+        ORDER BY ${sort_by} ${order};
+    `;
+
+    return db.query(queryString, [topic])
     .then(({ rows }) => {
         return rows;
     });

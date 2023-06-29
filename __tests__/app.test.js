@@ -653,6 +653,144 @@ describe('GET /api/users', () => {
     });
 });
 
+describe('GET /api/articles (queries)', () => {
+    test('200: should have 13 articles when unrecognised query is ignored', () => {
+        return request(app)
+        .get('/api/articles?not_a_variable=not_a_value')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(13);
+        });
+    });
+
+    test('200: should have 12 articles when filtered by topic "mitch"', () => {
+        return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+        });
+    });
+
+    test('200: should have 1 article when filtered by topic "CaTs" (when topic is not lowercase)', () => {
+        return request(app)
+        .get('/api/articles?topic=CaTs')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(1);
+            expect(body.articles[0].topic).toBe('cats');
+        });
+    });
+    
+    test('200: should have an empty array when filtered by topic "not_a_topic"', () => {
+        return request(app)
+        .get('/api/articles?topic=not_a_topic')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeEmpty();
+        });
+    });
+
+    test('200: should have articles sorted in descending author order (when order is specified)', () => {
+        return request(app)
+        .get('/api/articles?sort_by=author&order=desc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('author', { descending: true });
+        });
+    });
+
+    test('200: should have articles sorted in ascending author order', () => {
+        return request(app)
+        .get('/api/articles?sort_by=author&order=asc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('author');
+        });
+    });
+
+    test('200: should have 12 articles sorted in descending votes order', () => {
+        return request(app)
+        .get('/api/articles?topic=mitch&sort_by=votes&order=desc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+
+            expect(body.articles).toBeSortedBy('votes', { descending: true });
+        });
+    });
+
+    test('200: should have 12 articles sorted in ascending date order (when queries are rearranged)', () => {
+        return request(app)
+        .get('/api/articles?order=asc&sort_by=date&topic=mitch')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+
+            expect(body.articles).toBeSortedBy('created_at');
+        });
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if topic is missing', () => {
+            return request(app)
+            .get('/api/articles?topic=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid topic');
+            });
+        });
+
+        test('400: should have correct error message if sort_by is missing', () => {
+            return request(app)
+            .get('/api/articles?sort_by=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid sort_by');
+            });
+        });
+
+        test('400: should have correct error message if sort_by is invalid', () => {
+            return request(app)
+            .get('/api/articles?sort_by=invalid')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid sort_by');
+            });
+        });
+
+        test('400: should have correct error message if order is missing', () => {
+            return request(app)
+            .get('/api/articles?order=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid order');
+            });
+        });
+
+        test('400: should have correct error message if order is invalid', () => {
+            return request(app)
+            .get('/api/articles?order=invalid')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid order');
+            });
+        });
+    });
+});
+
 describe('endpoint not found', () => {
     test('404: should have correct error message if endpoint not found', () => {
         return request(app)
