@@ -11,7 +11,9 @@ function getArticle(req, res, next) {
 }
 
 function getArticles(req, res, next) {
-    articlesModels.getArticles()
+    const { topic, sort_by, order } = req.query;
+
+    articlesModels.getArticles(topic, sort_by, order)
     .then(articles => {
         res.status(200).send({ articles });
     })

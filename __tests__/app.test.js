@@ -13,6 +13,17 @@ afterAll(() => {
     db.end();
 });
 
+describe('ALL invalid endpoint', () => {
+    test('404: should have correct error message if endpoint not found', () => {
+        return request(app)
+        .get('/api/not_an_endpoint')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('endpoint not found');
+        });
+    });
+});
+
 describe('GET /api/topics', () => {
     test('200: should have 3 topics with correct object layout', () => {
         const objectLayout = {
@@ -69,9 +80,9 @@ describe('GET /api', () => {
 
             for (const endpoint in endpoints) {
                 if (endpoint !== 'GET /api') {
-                    const method = endpoint.split(' ')[0];
+                    const method = endpoint.substring(0, endpoint.indexOf(' '));
                     const url = endpoint
-                        .split(' ')[1]
+                        .substring(endpoint.indexOf(' ')+1)
                         .replaceAll(/:[\w\d]+(?=$|\/)/g, '1');
                     
                     const exampleResponse = endpoints[endpoint].exampleResponse;
@@ -337,7 +348,7 @@ describe('POST /api/articles/:article_id/comments', () => {
     });
 
     describe('error handling', () => {
-        it('400: should have correct error message if article_id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .post('/api/articles/not_a_number/comments')
             .send(postCommentRequest)
@@ -347,7 +358,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('404: should have correct error message if article_id not found', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .post('/api/articles/99/comments')
             .send(postCommentRequest)
@@ -357,7 +368,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if no request is sent', () => {
+        test('400: should have correct error message if no request is sent', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .expect(400)
@@ -366,7 +377,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if username is blank', () => {
+        test('400: should have correct error message if username is blank', () => {
             const blankUsername = {
                 username: '',
                 body: 'test_body'
@@ -375,13 +386,13 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(blankUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid username');
+                expect(body.msg).toBe('username not found');
             });
         });
 
-        it('400: should have correct error message if username is missing', () => {
+        test('400: should have correct error message if username is missing', () => {
             const noUsername = {
                 body: 'test_body'
             }
@@ -389,13 +400,13 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(noUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid username');
+                expect(body.msg).toBe('username not found');
             });
         });
 
-        it('400: should have correct error message if username not found', () => {
+        test('400: should have correct error message if username not found', () => {
             const unknownUsername = {
                 username: 'not_a_username',
                 body: 'test_body'
@@ -404,13 +415,13 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(unknownUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('foreign key violation');
+                expect(body.msg).toBe('username not found');
             });
         });
 
-        it('400: should have correct error message if message body is blank', () => {
+        test('400: should have correct error message if message body is blank', () => {
             const blankBody = {
                 username: 'butter_bridge',
                 body: ''
@@ -425,7 +436,7 @@ describe('POST /api/articles/:article_id/comments', () => {
             });
         });
 
-        it('400: should have correct error message if message body is missing', () => {
+        test('400: should have correct error message if message body is missing', () => {
             const noBody = {
                 username: 'butter_bridge',
             }
@@ -522,7 +533,7 @@ describe('PATCH /api/articles/:article_id', () => {
     });
 
     describe('error handling', () => {
-        it('400: should have correct error message if article_id is not a number', () => {
+        test('400: should have correct error message if article_id is not a number', () => {
             return request(app)
             .patch('/api/articles/not_a_number')
             .send({ inc_votes: 1 })
@@ -532,7 +543,7 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('404: should have correct error message if article_id not found', () => {
+        test('404: should have correct error message if article_id not found', () => {
             return request(app)
             .patch('/api/articles/99')
             .send({ inc_votes: 1 })
@@ -542,16 +553,16 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('400: should have correct error message if no request is sent', () => {
+        test('400: should have correct error message if no request is sent', () => {
             return request(app)
             .patch('/api/articles/1')
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid vote');
+                expect(body.msg).toBe('invalid inc_votes');
             });
         });
 
-        it('400: should have correct error message if inc_vote is not a number', () => {
+        test('400: should have correct error message if inc_vote is not a number', () => {
             return request(app)
             .patch('/api/articles/1')
             .send({ inc_votes: 'one' })
@@ -561,13 +572,13 @@ describe('PATCH /api/articles/:article_id', () => {
             });
         });
 
-        it('400: should have correct error message if inc_vote is 0', () => {
+        test('400: should have correct error message if inc_vote is 0', () => {
             return request(app)
             .patch('/api/articles/1')
             .send({ inc_votes: 0 })
             .expect(400)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid vote');
+                expect(body.msg).toBe('invalid inc_votes');
             });
         });
     });
@@ -653,13 +664,153 @@ describe('GET /api/users', () => {
     });
 });
 
-describe('endpoint not found', () => {
-    test('404: should have correct error message if endpoint not found', () => {
+describe('GET /api/articles (queries)', () => {
+    test('200: should have 13 articles when unrecognised query is ignored', () => {
         return request(app)
-        .get('/api/not_an_endpoint')
-        .expect(404)
+        .get('/api/articles?not_a_variable=not_a_value')
+        .expect(200)
         .then(({ body }) => {
-            expect(body.msg).toBe('endpoint not found');
+            expect(body.articles).toHaveLength(13);
+        });
+    });
+
+    test('200: should have 12 articles when filtered by topic "mitch"', () => {
+        return request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+        });
+    });
+
+    test('200: should have 1 article when filtered by topic "CaTs" (when topic is not lowercase)', () => {
+        return request(app)
+        .get('/api/articles?topic=CaTs')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(1);
+            expect(body.articles[0].topic).toBe('cats');
+        });
+    });
+
+    test('200: should have articles sorted in descending author order (when order is specified)', () => {
+        return request(app)
+        .get('/api/articles?sort_by=author&order=desc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('author', { descending: true });
+        });
+    });
+
+    test('200: should have articles sorted in ascending author order', () => {
+        return request(app)
+        .get('/api/articles?sort_by=author&order=asc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toBeSortedBy('author');
+        });
+    });
+
+    test('200: should have 12 articles sorted in descending votes order', () => {
+        return request(app)
+        .get('/api/articles?topic=mitch&sort_by=votes&order=desc')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+
+            expect(body.articles).toBeSortedBy('votes', { descending: true });
+        });
+    });
+
+    test('200: should have 12 articles sorted in ascending date order (when queries are rearranged)', () => {
+        return request(app)
+        .get('/api/articles?order=asc&sort_by=date&topic=mitch')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.articles).toHaveLength(12);
+
+            for (const article of body.articles) {
+                expect(article.topic).toBe('mitch');
+            }
+
+            expect(body.articles).toBeSortedBy('created_at');
+        });
+    });
+
+    test('should not be vulnerable to sql injection in the topic value', () => {
+        return request(app)
+        .get("/api/articles/?topic='group by articles.article_id;drop table users cascade;select * from articles--")
+        .then(() => {
+            return request(app)
+            .get('/api/users')
+        })
+        .then(({ body }) => {
+            expect(body.msg).not.toBe('undefined table');
+            expect(body.users).toBeDefined();
+        });
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if topic is missing', () => {
+            return request(app)
+            .get('/api/articles?topic=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid topic');
+            });
+        });
+
+        test('404: should have correct error message when topic not found', () => {
+            return request(app)
+            .get('/api/articles?topic=not_a_topic')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('slug not found');
+            });
+        });
+
+        test('400: should have correct error message if sort_by is missing', () => {
+            return request(app)
+            .get('/api/articles?sort_by=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid sort_by');
+            });
+        });
+
+        test('400: should have correct error message if sort_by is invalid', () => {
+            return request(app)
+            .get('/api/articles?sort_by=invalid')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid sort_by');
+            });
+        });
+
+        test('400: should have correct error message if order is missing', () => {
+            return request(app)
+            .get('/api/articles?order=')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid order');
+            });
+        });
+
+        test('400: should have correct error message if order is invalid', () => {
+            return request(app)
+            .get('/api/articles?order=invalid')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid order');
+            });
         });
     });
 });

@@ -7,7 +7,7 @@ function getComments(article_id) {
         WHERE article_id = $1;
     `;
 
-    return util.checkInDatabase('articles', 'article_id', article_id)
+    return util.validateParams({ article_id })
     .then(() => {
         
         const queryString = `
@@ -31,13 +31,8 @@ function getComments(article_id) {
     });
 }
 
-function postComment(article_id, username, body) {
-    if (!body) return Promise.reject({ status: 400, msg: 'invalid comment' });
-    if (!username) return Promise.reject({ status: 400, msg: 'invalid username' });
-
-    return Promise.all([
-        util.checkInDatabase('articles', 'article_id', article_id),
-    ])
+function postComment(article_id, username, comment) {
+    return util.validateParams({ article_id, username, comment })
     .then(() => {
         const queryString = `
             INSERT INTO comments
@@ -47,7 +42,7 @@ function postComment(article_id, username, body) {
             RETURNING *;
         `;
 
-        return db.query(queryString, [article_id, username, body])
+        return db.query(queryString, [article_id, username, comment])
     })
     .then(({ rows }) => {
         return rows[0];
@@ -55,7 +50,7 @@ function postComment(article_id, username, body) {
 }
 
 function deleteComment(comment_id) {
-    return util.checkInDatabase('comments', 'comment_id', comment_id)
+    return util.validateParams({ comment_id })
     .then(() => {
         const queryString = `
             DELETE FROM comments
