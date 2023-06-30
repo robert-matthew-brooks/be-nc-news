@@ -1,0 +1,8 @@
+const express = require('express');
+const topicsController = require('../controllers/topics.controller.js');
+
+const topicsRouter = express.Router();
+
+topicsRouter.get('/', topicsController.getTopics);
+
+module.exports = topicsRouter;

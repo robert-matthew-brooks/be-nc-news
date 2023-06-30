@@ -8,7 +8,7 @@ https://be-nc-news-nvms.onrender.com/api
 
 ## Summary
 
-This API was built as part of the Northcoders software development bootcamp I attended. The project was to build an API which mimics a real world backend service, which could then be used to provide information to front end achitecture. The project was built using node/javascript, and it focussed on some key backend topics from the bootcamp:
+This api was built as part of the Northcoders software development bootcamp I attended. The project was to build an api which mimics a real world backend service for a news/blog website, which could then be used to provide information to front end achitecture. The project was built using node/javascript, and it focussed on some key backend topics from the bootcamp:
 
 - Test Driven Development - the design of the api was centred around testing. Using the `jest` npm package, a test suite describing the required behaviours of the endpoints was created. The api code was then written to satisfy these expected behaviours.
 
