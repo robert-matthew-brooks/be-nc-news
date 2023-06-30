@@ -1,30 +1,30 @@
-const articlesModels = require('../models/articles.models.js');
+const articlesModel = require('../models/articles.model.js');
 
-function getArticle(req, res, next) {
+function get(req, res, next) {
     const { article_id } = req.params;
     
-    articlesModels.getArticle(article_id)
+    articlesModel.get(article_id)
     .then(article => {
         res.status(200).send({ article });
     })
     .catch(next);
 }
 
-function getArticles(req, res, next) {
+function getAll(req, res, next) {
     const { topic, sort_by, order } = req.query;
 
-    articlesModels.getArticles(topic, sort_by, order)
+    articlesModel.getAll(topic, sort_by, order)
     .then(articles => {
         res.status(200).send({ articles });
     })
     .catch(next);
 }
 
-function patchArticle(req, res, next) {
+function patch(req, res, next) {
     const { article_id } = req.params;
     const { inc_votes } = req.body;
 
-    articlesModels.patchArticle(article_id, inc_votes)
+    articlesModel.patch(article_id, inc_votes)
     .then(article => {
         res.status(200).send({ article });
     })
@@ -32,7 +32,7 @@ function patchArticle(req, res, next) {
 }
 
 module.exports = {
-    getArticle,
-    getArticles,
-    patchArticle
+    get,
+    getAll,
+    patch
 };

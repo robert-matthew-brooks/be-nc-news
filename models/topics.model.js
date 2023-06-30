@@ -1,6 +1,6 @@
 const db = require('../db/connection.js');
 
-function getTopics() {
+function getAll() {
     const queryString = `
         SELECT * FROM topics;
     `;
@@ -12,5 +12,5 @@ function getTopics() {
 }
 
 module.exports = {
-    getTopics
+    getAll
 };

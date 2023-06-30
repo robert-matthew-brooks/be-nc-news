@@ -1,7 +1,7 @@
-const topicsModels = require('../models/topics.models.js');
+const topicsModel = require('../models/topics.model.js');
 
-function getTopics(req, res, next) {
-    return topicsModels.getTopics()
+function getAll(req, res, next) {
+    return topicsModel.getAll()
     .then(topics => {
         res.status(200).send({ topics });
     })
@@ -9,5 +9,5 @@ function getTopics(req, res, next) {
 }
 
 module.exports = {
-    getTopics
+    getAll
 };

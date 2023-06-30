@@ -26,7 +26,7 @@ describe('ALL invalid endpoint', () => {
 
 describe('GET /api/topics', () => {
     test('200: should have 3 topics with correct object layout', () => {
-        const objectLayout = {
+        const expectedTopic = {
             slug: expect.any(String),
             description: expect.any(String)
         };
@@ -38,7 +38,7 @@ describe('GET /api/topics', () => {
             expect(body.topics).toHaveLength(3);
 
             for (const topic of body.topics) {
-                expect(topic).toMatchObject(objectLayout);
+                expect(topic).toMatchObject(expectedTopic);
             }
         });
     });
@@ -142,7 +142,7 @@ describe('GET /api', () => {
 
 describe('GET /api/articles/:article_id', () => {
     test('200: should have article with the correct object layout', () => {
-        const objectLayout = {
+        const expectedArticle = {
             article_id: expect.any(Number),
             title: expect.any(String),
             topic: expect.any(String),
@@ -157,7 +157,7 @@ describe('GET /api/articles/:article_id', () => {
         .get('/api/articles/1')
         .expect(200)
         .then(({ body }) => {
-            expect(body.article).toMatchObject(objectLayout);
+            expect(body.article).toMatchObject(expectedArticle);
         });
     });
 
@@ -184,7 +184,7 @@ describe('GET /api/articles/:article_id', () => {
 
 describe('GET /api/articles', () => {
     test('200: should have 13 articles with correct object layout', () => {
-        const objectLayout = {
+        const expectedArticle = {
             author: expect.any(String),
             title: expect.any(String),
             article_id: expect.any(Number),
@@ -202,7 +202,7 @@ describe('GET /api/articles', () => {
             expect(body.articles).toHaveLength(13);
 
             for (const article of body.articles) {
-                expect(article).toMatchObject(objectLayout);
+                expect(article).toMatchObject(expectedArticle);
                 expect(article).not.toHaveProperty('body');
             }
         });
@@ -243,7 +243,7 @@ describe('GET /api/articles/:article_id/comments', () => {
     });
 
     test('200: should have 11 comments with correct object layout', () => {
-        const objectLayout = {
+        const expectedComment = {
             comment_id: expect.any(Number),
             votes: expect.any(Number),
             created_at: expect.any(String),
@@ -259,7 +259,7 @@ describe('GET /api/articles/:article_id/comments', () => {
             expect(body.comments).toHaveLength(11);
 
             for (const comment of body.comments) {
-                expect(comment).toMatchObject(objectLayout);
+                expect(comment).toMatchObject(expectedComment);
             }
         });
     });
@@ -301,7 +301,7 @@ describe('POST /api/articles/:article_id/comments', () => {
     };
 
     test('201: should have comment with correct object layout', () => {
-        const objectLayout = {
+        const expectedComment = {
             comment_id: expect.any(Number),
             body: expect.any(String),
             article_id: expect.any(Number),
@@ -315,7 +315,7 @@ describe('POST /api/articles/:article_id/comments', () => {
         .send(postCommentRequest)
         .expect(201)
         .then(({ body }) => {
-            expect(body.comment).toMatchObject(objectLayout);
+            expect(body.comment).toMatchObject(expectedComment);
             expect(body.comment.author).toBe(postCommentRequest.username);
             expect(body.comment.body).toBe(postCommentRequest.body);
         });
@@ -455,7 +455,7 @@ describe('POST /api/articles/:article_id/comments', () => {
 
 describe('PATCH /api/articles/:article_id', () => {
     test('200: should have updated article with correct object layout', () => {
-        const objectLayout = {
+        const expectedArticle = {
             article_id: expect.any(Number),
             title: expect.any(String),
             topic: expect.any(String),
@@ -471,7 +471,7 @@ describe('PATCH /api/articles/:article_id', () => {
         .send({ inc_votes: 1 })
         .expect(200)
         .then(({ body }) => {
-            expect(body.article).toMatchObject(objectLayout);
+            expect(body.article).toMatchObject(expectedArticle);
         });
     });
 
@@ -632,7 +632,7 @@ describe('DELETE /api/comments/:comment_id', () => {
 
 describe('GET /api/users', () => {
     test('200: should have 4 users with correct object layout', () => {
-        const objectLayout = {
+        const expectedUser = {
             username: expect.any(String),
             name: expect.any(String),
             avatar_url: expect.any(String)
@@ -645,7 +645,7 @@ describe('GET /api/users', () => {
             expect(body.users).toHaveLength(4);
 
             for (const user of body.users) {
-                expect(user).toMatchObject(objectLayout);
+                expect(user).toMatchObject(expectedUser);
             }
         });
     });
@@ -818,7 +818,7 @@ describe('GET /api/articles (queries)', () => {
 
 describe('GET /api/articles/:article_id (comment_count)', () => {
     test('200: should have article with the correct object layout', () => {
-        const objectLayout = {
+        const expectedArticle = {
             article_id: expect.any(Number),
             title: expect.any(String),
             topic: expect.any(String),
@@ -834,14 +834,14 @@ describe('GET /api/articles/:article_id (comment_count)', () => {
         .get('/api/articles/1')
         .expect(200)
         .then(({ body }) => {
-            expect(body.article).toMatchObject(objectLayout);
+            expect(body.article).toMatchObject(expectedArticle);
         });
     });
 });
 
 describe('GET /api/users/:user_id', () => {
     test('200: should have user with the correct object layout', () => {
-        const expectedObject = {
+        const expectedUser = {
             username: expect.any(String),
             avatar_url: expect.any(String),
             name: expect.any(String)
@@ -851,7 +851,7 @@ describe('GET /api/users/:user_id', () => {
         .get('/api/users/butter_bridge')
         .expect(200)
         .then(({ body }) => {
-            expect(body.user).toMatchObject(expectedObject);
+            expect(body.user).toMatchObject(expectedUser);
         });
     });
 
@@ -869,7 +869,7 @@ describe('GET /api/users/:user_id', () => {
 
 describe('PATCH /api/comments/:comment_id', () => {
     test('200: should have updated comment with correct object layout', () => {
-        const objectLayout = {
+        const expectedComment = {
             comment_id: expect.any(Number),
             body: expect.any(String),
             article_id: expect.any(Number),
@@ -883,7 +883,7 @@ describe('PATCH /api/comments/:comment_id', () => {
         .send({ inc_votes: 1 })
         .expect(200)
         .then(({ body }) => {
-            expect(body.comment).toMatchObject(objectLayout);
+            expect(body.comment).toMatchObject(expectedComment);
         });
     });
 

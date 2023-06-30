@@ -1,17 +1,17 @@
-const usersModels = require('../models/users.models.js');
+const usersModel = require('../models/users.model.js');
 
-function getUsers(req, res, next) {
-    return usersModels.getUsers()
+function getAll(req, res, next) {
+    return usersModel.getAll()
     .then(users => {
         res.status(200).send({ users });
     })
     .catch(next);
 }
 
-function getUser(req, res, next) {
+function get(req, res, next) {
     const { username } = req.params;
 
-    return usersModels.getUser(username)
+    return usersModel.get(username)
     .then(user => {
         res.status(200).send({ user });
     })
@@ -19,6 +19,6 @@ function getUser(req, res, next) {
 }
 
 module.exports = {
-    getUsers,
-    getUser
+    getAll,
+    get
 };

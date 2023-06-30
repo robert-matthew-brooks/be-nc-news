@@ -1,7 +1,7 @@
 const db = require('../db/connection.js');
 const util = require('./util.js');
 
-function getArticle(article_id) {
+function get(article_id) {
     return util.validateParams({ article_id })
     .then(() => {
         const queryString = `
@@ -28,7 +28,7 @@ function getArticle(article_id) {
     });
 }
 
-function getArticles(topic = '%', sort_by = 'date', order = 'DESC') {
+function getAll(topic = '%', sort_by = 'date', order = 'DESC') {
     topic = topic.toLowerCase();
     sort_by = sort_by.toLowerCase();
     if (sort_by === 'date') sort_by = 'created_at';
@@ -59,7 +59,7 @@ function getArticles(topic = '%', sort_by = 'date', order = 'DESC') {
     });
 }
 
-function patchArticle(article_id, inc_votes) {
+function patch(article_id, inc_votes) {
     return util.validateParams({ article_id, inc_votes })
     .then(() => {
         const queryString = `
@@ -77,7 +77,7 @@ function patchArticle(article_id, inc_votes) {
 }
 
 module.exports = {
-    getArticle,
-    getArticles,
-    patchArticle
+    get,
+    getAll,
+    patch
 };

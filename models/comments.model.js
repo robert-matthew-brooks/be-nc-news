@@ -1,15 +1,9 @@
 const db = require('../db/connection.js');
 const util = require('./util.js');
 
-function getComments(article_id) {
-    const queryString = `
-        SELECT * FROM articles
-        WHERE article_id = $1;
-    `;
-
+function getAll(article_id) {
     return util.validateParams({ article_id })
     .then(() => {
-        
         const queryString = `
             SELECT comments.comment_id,
                    comments.votes,
@@ -31,7 +25,7 @@ function getComments(article_id) {
     });
 }
 
-function postComment(article_id, username, comment) {
+function post(article_id, username, comment) {
     return util.validateParams({ article_id, username, comment })
     .then(() => {
         const queryString = `
@@ -49,7 +43,7 @@ function postComment(article_id, username, comment) {
     })
 }
 
-function deleteComment(comment_id) {
+function remove(comment_id) {
     return util.validateParams({ comment_id })
     .then(() => {
         const queryString = `
@@ -61,7 +55,7 @@ function deleteComment(comment_id) {
     });
 }
 
-function patchComment(comment_id, inc_votes) {
+function patch(comment_id, inc_votes) {
     return util.validateParams({ comment_id, inc_votes })
     .then(() => {
         const queryString = `
@@ -79,8 +73,8 @@ function patchComment(comment_id, inc_votes) {
 }
 
 module.exports = {
-    getComments,
-    postComment,
-    deleteComment,
-    patchComment
+    getAll,
+    post,
+    remove,
+    patch
 };

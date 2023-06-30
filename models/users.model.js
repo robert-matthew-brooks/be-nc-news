@@ -1,7 +1,7 @@
 const db = require('../db/connection.js');
 const util = require('./util.js');
 
-function getUsers() {
+function getAll() {
     const queryString = `
         SELECT * FROM users;
     `;
@@ -12,7 +12,7 @@ function getUsers() {
     });
 }
 
-function getUser(username) {
+function get(username) {
     return util.validateParams({ username })
     .then(() => {
         const queryString = `
@@ -28,6 +28,6 @@ function getUser(username) {
 }
 
 module.exports = {
-    getUsers,
-    getUser
+    getAll,
+    get
 };
