@@ -83,6 +83,7 @@ describe('GET /api', () => {
                     const method = endpoint.substring(0, endpoint.indexOf(' '));
                     const url = endpoint
                         .substring(endpoint.indexOf(' ')+1)
+                        .replace(':username', 'butter_bridge')
                         .replaceAll(/:[\w\d]+(?=$|\/)/g, '1');
                     
                     const exampleResponse = endpoints[endpoint].exampleResponse;
@@ -834,6 +835,34 @@ describe('GET /api/articles/:article_id (comment_count)', () => {
         .expect(200)
         .then(({ body }) => {
             expect(body.article).toMatchObject(objectLayout);
+        });
+    });
+});
+
+describe('GET /api/users/:user_id', () => {
+    test('200: should have user with the correct object layout', () => {
+        const expectedObject = {
+            username: expect.any(String),
+            avatar_url: expect.any(String),
+            name: expect.any(String)
+        };
+
+        return request(app)
+        .get('/api/users/butter_bridge')
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.user).toMatchObject(expectedObject);
+        });
+    });
+
+    describe('error handling', () => {
+        test('404: should have correct error message if username not found', () => {
+            return request(app)
+            .get('/api/users/not_a_username')
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('username not found');
+            });
         });
     });
 });
