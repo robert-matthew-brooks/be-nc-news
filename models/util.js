@@ -5,7 +5,7 @@ function validateParams(params) {
     const checks = [];
 
     const greenlists = {
-        sort_by: ['author', 'title', 'article_id', 'topic', 'created_at', 'votes', 'article_img_url', 'comment_count'],
+        sort_by: ['author', 'title', 'topic', 'created_at', 'votes', 'comment_count'],
         order: ['ASC', 'DESC']
     };
 
