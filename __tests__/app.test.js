@@ -768,7 +768,7 @@ describe('GET /api/articles (queries)', () => {
             });
         });
 
-        test('404: should have correct error message when topic is invalid', () => {
+        test('404: should have correct error message when topic not found', () => {
             return request(app)
             .get('/api/articles?topic=not_a_topic')
             .expect(404)
