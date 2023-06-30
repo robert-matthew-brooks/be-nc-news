@@ -13,6 +13,17 @@ afterAll(() => {
     db.end();
 });
 
+describe('ALL invalid endpoint', () => {
+    test('404: should have correct error message if endpoint not found', () => {
+        return request(app)
+        .get('/api/not_an_endpoint')
+        .expect(404)
+        .then(({ body }) => {
+            expect(body.msg).toBe('endpoint not found');
+        });
+    });
+});
+
 describe('GET /api/topics', () => {
     test('200: should have 3 topics with correct object layout', () => {
         const objectLayout = {
@@ -375,9 +386,9 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(blankUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid username');
+                expect(body.msg).toBe('username not found');
             });
         });
 
@@ -389,9 +400,9 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(noUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('invalid username');
+                expect(body.msg).toBe('username not found');
             });
         });
 
@@ -404,9 +415,9 @@ describe('POST /api/articles/:article_id/comments', () => {
             return request(app)
             .post('/api/articles/1/comments')
             .send(unknownUsername)
-            .expect(400)
+            .expect(404)
             .then(({ body }) => {
-                expect(body.msg).toBe('foreign key violation');
+                expect(body.msg).toBe('username not found');
             });
         });
 
@@ -800,17 +811,6 @@ describe('GET /api/articles (queries)', () => {
             .then(({ body }) => {
                 expect(body.msg).toBe('invalid order');
             });
-        });
-    });
-});
-
-describe('endpoint not found', () => {
-    test('404: should have correct error message if endpoint not found', () => {
-        return request(app)
-        .get('/api/not_an_endpoint')
-        .expect(404)
-        .then(({ body }) => {
-            expect(body.msg).toBe('endpoint not found');
         });
     });
 });

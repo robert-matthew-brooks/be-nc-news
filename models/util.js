@@ -10,24 +10,24 @@ function validateParams(params) {
     };
 
     if (Object.keys(params).includes('article_id')) {
-        checks.push(rejectIfNotInDatabase('articles', 'article_id', params.article_id));
+        checks.push(rejectIfNotInTable('articles', 'article_id', params.article_id));
     }
 
     if (Object.keys(params).includes('comment_id')) {
-        checks.push(rejectIfNotInDatabase('comments', 'comment_id', params.comment_id));
+        checks.push(rejectIfNotInTable('comments', 'comment_id', params.comment_id));
+    }
+
+    if (Object.keys(params).includes('username')) {
+        checks.push(rejectIfNotInTable('users', 'username', params.username));
     }
 
     if (Object.keys(params).includes('topic')) {
-        if (params.topic !== '%') checks.push(rejectIfNotInDatabase('topics', 'slug', params.topic));
+        if (params.topic !== '%') checks.push(rejectIfNotInTable('topics', 'slug', params.topic));
         checks.push(rejectIfFalsy('topic', params.topic));
     }
 
     if (Object.keys(params).includes('comment')) {
         checks.push(rejectIfFalsy('comment', params.comment));
-    }
-
-    if (Object.keys(params).includes('username')) {
-        checks.push(rejectIfFalsy('username', params.username));
     }
 
     if (Object.keys(params).includes('inc_votes')) {
@@ -57,7 +57,7 @@ function rejectIfNotInGreenlist(name, value, greenlist) {
     }
 }
 
-function rejectIfNotInDatabase(table, column, value) {
+function rejectIfNotInTable(table, column, value) {
     const queryString = format(`
         SELECT * FROM %I
         WHERE %I = $1;
