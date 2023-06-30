@@ -866,3 +866,113 @@ describe('GET /api/users/:user_id', () => {
         });
     });
 });
+
+describe('PATCH /api/comments/:comment_id', () => {
+    test('200: should have updated comment with correct object layout', () => {
+        const objectLayout = {
+            comment_id: expect.any(Number),
+            body: expect.any(String),
+            article_id: expect.any(Number),
+            author: expect.any(String),
+            votes: expect.any(Number),
+            created_at: expect.any(String),
+        };
+
+        return request(app)
+        .patch('/api/comments/1')
+        .send({ inc_votes: 1 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comment).toMatchObject(objectLayout);
+        });
+    });
+
+    test('addition of votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/comments/1')
+        .send({ inc_votes: 1 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comment.votes).toBe(17);
+        });
+    });
+
+    test('subtraction votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/comments/1')
+        .send({ inc_votes: -1 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comment.votes).toBe(15);
+        });
+    });
+
+    test('consecutive changes to the votes should be recorded correctly', () => {
+        return request(app)
+        .patch('/api/comments/1')
+        .send({ inc_votes: 10 })
+        .expect(200)
+        .then(({ body }) => {
+            expect(body.comment.votes).toBe(26);
+
+            return request(app)
+            .patch('/api/comments/1')
+            .send({ inc_votes: -200 })
+            .expect(200)
+        })
+        .then(({ body }) => {
+            expect(body.comment.votes).toBe(-174);
+        });
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if comment_id is not a number', () => {
+            return request(app)
+            .patch('/api/comments/not_a_number')
+            .send({ inc_votes: 1 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid text representation');
+            });
+        });
+
+        test('404: should have correct error message if comment_id not found', () => {
+            return request(app)
+            .patch('/api/comments/99')
+            .send({ inc_votes: 1 })
+            .expect(404)
+            .then(({ body }) => {
+                expect(body.msg).toBe('comment_id not found');
+            });
+        });
+
+        test('400: should have correct error message if no request is sent', () => {
+            return request(app)
+            .patch('/api/comments/1')
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid inc_votes');
+            });
+        });
+
+        test('400: should have correct error message if inc_vote is not a number', () => {
+            return request(app)
+            .patch('/api/comments/1')
+            .send({ inc_votes: 'one' })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid text representation');
+            });
+        });
+
+        test('400: should have correct error message if inc_vote is 0', () => {
+            return request(app)
+            .patch('/api/comments/1')
+            .send({ inc_votes: 0 })
+            .expect(400)
+            .then(({ body }) => {
+                expect(body.msg).toBe('invalid inc_votes');
+            });
+        });
+    });
+});

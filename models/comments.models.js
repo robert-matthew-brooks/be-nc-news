@@ -61,8 +61,26 @@ function deleteComment(comment_id) {
     });
 }
 
+function patchComment(comment_id, inc_votes) {
+    return util.validateParams({ comment_id, inc_votes })
+    .then(() => {
+        const queryString = `
+            UPDATE comments
+            SET votes = votes + $2
+            WHERE comment_id = $1
+            RETURNING *;
+        `;
+
+        return db.query(queryString, [comment_id, inc_votes]);
+    })
+    .then(({ rows }) => {
+        return rows[0];
+    });
+}
+
 module.exports = {
     getComments,
     postComment,
-    deleteComment
+    deleteComment,
+    patchComment
 };
