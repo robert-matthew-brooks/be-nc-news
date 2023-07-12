@@ -1,7 +1,7 @@
 const format = require('pg-format');
 const db = require('../db/connection.js');
 
-function validateParams(params) {
+async function validateParams(params) {
     const checks = [];
 
     const greenlists = {
@@ -42,7 +42,7 @@ function validateParams(params) {
         checks.push(rejectIfNotInGreenlist('order', params.order, greenlists.order));
     }
 
-    return Promise.all(checks);
+    await Promise.all(checks);
 }
 
 function rejectIfFalsy(name, value) {
@@ -57,18 +57,17 @@ function rejectIfNotInGreenlist(name, value, greenlist) {
     }
 }
 
-function rejectIfNotInTable(table, column, value) {
+async function rejectIfNotInTable(table, column, value) {
     const queryString = format(`
         SELECT * FROM %I
         WHERE %I = $1;
     `, table, column);
 
-    return db.query(queryString, [value])
-    .then(({ rows }) => {
-        if (rows.length === 0) {
-            return Promise.reject({ status: 404, msg: `${column} not found`});
-        }
-    });
+    const { rows } = await db.query(queryString, [value]);
+
+    if (rows.length === 0) {
+        return Promise.reject({ status: 404, msg: `${column} not found`});
+    }
 }
 
 module.exports = {
