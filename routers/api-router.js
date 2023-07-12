@@ -1,9 +1,9 @@
 const express = require('express');
-const apiController = require('../controllers/api.controller.js');
-const topicsRouter = require('./topics.router.js');
-const articlesRouter = require('./articles.router.js');
-const commentsRouter = require('./comments.router.js');
-const usersRouter = require('./users.router.js');
+const apiController = require('../controllers/api-controller.js');
+const topicsRouter = require('./topics-router.js');
+const articlesRouter = require('./articles-router.js');
+const commentsRouter = require('./comments-router.js');
+const usersRouter = require('./users-router.js');
 
 const apiRouter = express.Router();
 

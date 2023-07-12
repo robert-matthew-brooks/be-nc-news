@@ -1,6 +1,6 @@
 const express = require('express');
 
-const apiRouter = require('./routers/api.router.js');
+const apiRouter = require('./routers/api-router.js');
 const errorHandlers = require('./error-handlers/error-handlers.js');
 
 const app = express();

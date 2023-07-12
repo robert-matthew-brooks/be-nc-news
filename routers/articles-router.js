@@ -1,6 +1,6 @@
 const express = require('express');
-const articlesController = require('../controllers/articles.controller.js');
-const commentsController = require('../controllers/comments.controller.js');
+const articlesController = require('../controllers/articles-controller.js');
+const commentsController = require('../controllers/comments-controller.js');
 
 const articlesRouter = express.Router();
 
