@@ -40,8 +40,28 @@ async function patch(req, res, next) {
     }
 }
 
+async function post(req, res, next) {
+    const {
+        author,
+        title,
+        body,
+        topic,
+        article_img_url
+    } = req.body;
+
+    try {
+        const article = await articlesModel.post(author, title, body, topic, article_img_url);
+        res.status(201).send({ article });
+    }
+
+    catch(err) {
+        next(err);
+    }
+}
+
 module.exports = {
     get,
     getAll,
-    patch
+    patch,
+    post
 };

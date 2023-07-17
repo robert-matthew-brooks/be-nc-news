@@ -2,7 +2,7 @@ const db = require('../db/connection.js');
 const util = require('./util.js');
 
 async function get(article_id) {
-    await  util.validateParams({ article_id });
+    await util.rejectIfNotInTable(article_id, 'articles', 'article_id');
 
     const { rows } = await db.query(`
         SELECT articles.article_id,
@@ -30,7 +30,12 @@ async function getAll(topic = '%', sort_by = 'date', order = 'DESC') {
     if (sort_by === 'date') sort_by = 'created_at';
     order = order.toUpperCase();
 
-    await util.validateParams({ topic, sort_by, order });
+    await Promise.all([
+        util.rejectIfFalsy({ topic }),
+        util.rejectIfNotInGreenlist({ sort_by }, util.greenlists.sort_by),
+        util.rejectIfNotInGreenlist({ order }, util.greenlists.order)
+    ]);
+    if (topic !== '%') await util.rejectIfNotInTable(topic, 'topics', 'slug');
 
     const { rows } = await db.query(`
         SELECT articles.author,
@@ -52,7 +57,8 @@ async function getAll(topic = '%', sort_by = 'date', order = 'DESC') {
 }
 
 async function patch(article_id, inc_votes) {
-    await util.validateParams({ article_id, inc_votes });
+    await util.rejectIfFalsy({ inc_votes });
+    await util.rejectIfNotInTable(article_id, 'articles', 'article_id');
 
     const { rows } = await db.query(`
         UPDATE articles
@@ -63,8 +69,30 @@ async function patch(article_id, inc_votes) {
     return rows[0];
 }
 
+async function post(author, title, body, topic, article_img_url) {
+    await util.rejectIfFalsy({ body, author, title, topic });
+    await Promise.all([
+        util.rejectIfNotInTable(author, 'users', 'username'),
+        util.rejectIfNotInTable(topic, 'topics', 'slug')
+    ]);
+
+    if (!article_img_url) {
+        article_img_url = 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700';
+    }
+
+    const { rows } = await db.query(`
+        INSERT INTO articles
+            (author, title, body, topic, article_img_url) 
+        VALUES
+            ($1, $2, $3, $4, $5)
+        RETURNING *;
+    `, [author, title, body, topic, article_img_url]);
+    return rows[0];
+}
+
 module.exports = {
     get,
     getAll,
-    patch
+    patch,
+    post
 };

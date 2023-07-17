@@ -2,7 +2,7 @@ const db = require('../db/connection.js');
 const util = require('./util.js');
 
 async function getAll(article_id) {
-    await util.validateParams({ article_id });
+    await util.rejectIfNotInTable(article_id, 'articles', 'article_id');
 
     const { rows } = await db.query(`
         SELECT comments.comment_id,
@@ -22,8 +22,11 @@ async function getAll(article_id) {
 }
 
 async function post(article_id, username, comment) {
-    await util.validateParams({ article_id, username, comment });
-
+    await util.rejectIfFalsy({ comment });
+    await Promise.all([
+        util.rejectIfNotInTable(article_id, 'articles', 'article_id'),
+        util.rejectIfNotInTable(username, 'users', 'username')
+    ]);
 
     const { rows } = await db.query(`
         INSERT INTO comments
@@ -37,7 +40,7 @@ async function post(article_id, username, comment) {
 }
 
 async function remove(comment_id) {
-    await util.validateParams({ comment_id });
+    await util.rejectIfNotInTable(comment_id, 'comments', 'comment_id');
         
     await db.query(`
         DELETE FROM comments
@@ -46,7 +49,8 @@ async function remove(comment_id) {
 }
 
 async function patch(comment_id, inc_votes) {
-    await  util.validateParams({ comment_id, inc_votes });
+    await util.rejectIfFalsy({ inc_votes });
+    await util.rejectIfNotInTable(comment_id, 'comments', 'comment_id');
 
     const { rows } = await db.query(`
         UPDATE comments
