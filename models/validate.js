@@ -14,6 +14,14 @@ function rejectIfFalsy(values) {
     }
 }
 
+function rejectIfNotPositiveNumeric(values) {
+    for (const key in values) {
+        if (!/^[\d]+$/.test(values[key]) || +values[key] <= 0) {
+            return Promise.reject({ status: 400, msg: `invalid ${key}` })
+        }
+    }
+}
+
 function rejectIfNotInGreenlist(values, greenlist) {
     for (const key in values) {
         if (!greenlist.includes(values[key])) {
@@ -38,6 +46,7 @@ async function rejectIfNotInTable(value, table, column) {
 module.exports = {
     greenlists,
     rejectIfFalsy,
+    rejectIfNotPositiveNumeric,
     rejectIfNotInGreenlist,
     rejectIfNotInTable
 };

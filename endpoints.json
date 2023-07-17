@@ -28,8 +28,8 @@
     }
   },
   "GET /api/articles": {
-    "description": "responds with an array of all articles, omitting the article body",
-    "queries": ["topic", "sort_by", "order"],
+    "description": "responds with a paginated array of articles (omitting the article body), and a total of matching articles on the database",
+    "queries": ["topic", "sort_by", "order", "limit", "p"],
     "exampleResponse": {
       "articles": [{
         "author": "icellusedkars",
@@ -40,7 +40,8 @@
         "votes": 0,
         "article_img_url": "https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700",
         "comment_count": 2
-      }]
+      }],
+      "total_count": 1
     }
   },
   "GET /api/articles/:article_id/comments": {

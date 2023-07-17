@@ -1,8 +1,8 @@
 const db = require('../db/connection.js');
-const util = require('./util.js');
+const validate = require('./validate.js');
 
 async function get(article_id) {
-    await util.rejectIfNotInTable(article_id, 'articles', 'article_id');
+    await validate.rejectIfNotInTable(article_id, 'articles', 'article_id');
 
     const { rows } = await db.query(`
         SELECT articles.article_id,
@@ -24,18 +24,21 @@ async function get(article_id) {
     return rows[0];
 }
 
-async function getAll(topic = '%', sort_by = 'date', order = 'DESC') {
+async function getAll(topic = '%', sort_by = 'date', order = 'DESC', limit = 10, p = 1) {
     topic = topic.toLowerCase();
     sort_by = sort_by.toLowerCase();
     if (sort_by === 'date') sort_by = 'created_at';
     order = order.toUpperCase();
 
     await Promise.all([
-        util.rejectIfFalsy({ topic }),
-        util.rejectIfNotInGreenlist({ sort_by }, util.greenlists.sort_by),
-        util.rejectIfNotInGreenlist({ order }, util.greenlists.order)
+        validate.rejectIfFalsy({ topic, limit, p }),
+        validate.rejectIfNotInGreenlist({ sort_by }, validate.greenlists.sort_by),
+        validate.rejectIfNotInGreenlist({ order }, validate.greenlists.order),
+        validate.rejectIfNotPositiveNumeric({ limit, p })
     ]);
-    if (topic !== '%') await util.rejectIfNotInTable(topic, 'topics', 'slug');
+    if (topic !== '%') await validate.rejectIfNotInTable(topic, 'topics', 'slug');
+
+    const offset = limit * (p-1);
 
     const { rows } = await db.query(`
         SELECT articles.author,
@@ -50,15 +53,26 @@ async function getAll(topic = '%', sort_by = 'date', order = 'DESC') {
         LEFT OUTER JOIN comments
         ON articles.article_id = comments.article_id
         WHERE lower(articles.topic) LIKE $1
-        GROUP BY articles.article_id ORDER BY ${sort_by} ${order};
+        GROUP BY articles.article_id
+        ORDER BY ${sort_by} ${order}
+        LIMIT ${limit} OFFSET ${offset};
     `, [topic]);
 
-    return rows;
+    const allArticleIds = await db.query(`
+        SELECT articles.article_id
+        FROM articles
+        WHERE lower(articles.topic) LIKE $1;
+    `, [topic]);
+
+    return {
+        articles: rows,
+        total_count: allArticleIds.rows.length
+    };
 }
 
 async function patch(article_id, inc_votes) {
-    await util.rejectIfFalsy({ inc_votes });
-    await util.rejectIfNotInTable(article_id, 'articles', 'article_id');
+    await validate.rejectIfFalsy({ inc_votes });
+    await validate.rejectIfNotInTable(article_id, 'articles', 'article_id');
 
     const { rows } = await db.query(`
         UPDATE articles
@@ -70,10 +84,10 @@ async function patch(article_id, inc_votes) {
 }
 
 async function post(author, title, body, topic, article_img_url) {
-    await util.rejectIfFalsy({ body, author, title, topic });
+    await validate.rejectIfFalsy({ body, author, title, topic });
     await Promise.all([
-        util.rejectIfNotInTable(author, 'users', 'username'),
-        util.rejectIfNotInTable(topic, 'topics', 'slug')
+        validate.rejectIfNotInTable(author, 'users', 'username'),
+        validate.rejectIfNotInTable(topic, 'topics', 'slug')
     ]);
 
     if (!article_img_url) {
