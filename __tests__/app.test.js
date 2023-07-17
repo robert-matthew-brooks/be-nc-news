@@ -824,3 +824,278 @@ describe('PATCH /api/comments/:comment_id', () => {
         });
     });
 });
+
+describe('POST /api/articles', () => {
+    const postArticleRequest = {
+        author: 'butter_bridge',
+        title: 'Living in the shadow of a great man',
+        body: 'I find this existence challenging',
+        topic: 'mitch',
+        article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+    };
+
+    test('201: should have article with correct object layout', async () => {
+        const expectedArticle = {
+            author: expect.any(String),
+            title: expect.any(String),
+            body: expect.any(String),
+            topic: expect.any(String),
+            article_img_url: expect.any(String),
+            article_id: expect.any(Number),
+            votes: expect.any(Number),
+            created_at: expect.any(String),
+        };
+
+        const { body } = await request(app)
+        .post('/api/articles')
+        .send(postArticleRequest);
+
+        console.log(body);
+   
+        expect(body.article).toMatchObject(expectedArticle);
+        expect(body.article.author).toBe(postArticleRequest.author);
+        expect(body.article.title).toBe(postArticleRequest.title);
+        expect(body.article.body).toBe(postArticleRequest.body);
+        expect(body.article.topic).toBe(postArticleRequest.topic);
+        expect(body.article.article_img_url).toBe(postArticleRequest.article_img_url);
+    });
+
+    test('201: should provide a default article_img_url if none provided', async () => {
+        const blankImg = {
+            author: 'butter_bridge',
+            title: 'Living in the shadow of a great man',
+            body: 'I find this existence challenging',
+            topic: 'mitch',
+            article_img_url: ''
+        }
+        
+        const { body: bodyBlankImg } = await request(app)
+        .post('/api/articles')
+        .send(blankImg);
+
+        expect(typeof bodyBlankImg.article.article_img_url).toBe('string');
+        expect(bodyBlankImg.article.article_img_url).not.toBe('');
+
+        const noImg = {
+            author: 'butter_bridge',
+            title: 'Living in the shadow of a great man',
+            body: 'I find this existence challenging',
+            topic: 'mitch',
+            article_img_url: ''
+        }
+
+        const { body: bodyNoImg } = await request(app)
+        .post('/api/articles')
+        .send(noImg);
+
+        expect(typeof bodyNoImg.article.article_img_url).toBe('string');
+        expect(bodyNoImg.article.article_img_url).not.toBe('');
+    });
+    
+    test('number of articles should increase by one after successful post', () => {
+        let articlesBefore;
+        let articlesAfter;
+
+        return request(app)
+        .get('/api/articles')
+        .expect(200)
+        .then(({ body }) => {
+            articlesBefore = body.articles.length;
+
+            return request(app)
+            .post('/api/articles')
+            .send(postArticleRequest)
+            .expect(201);
+        })
+        .then(() => {
+            return request(app)
+            .get('/api/articles')
+            .expect(200);
+        })
+        .then(({ body }) => {
+            articlesAfter = body.articles.length;
+            
+            expect(articlesAfter).toBe(articlesBefore + 1);
+        });
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if no request is sent', async () => {
+            const { body } = await request(app)
+            .post('/api/articles')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid body');
+        });
+
+        test('400: should have correct error message if author is blank', async () => {
+            const blankAuthor = {
+                author: '',
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(blankAuthor)
+            .expect(400);
+            
+            expect(body.msg).toBe('invalid author');
+        });
+
+        test('400: should have correct error message if author is missing', async () => {
+            const noAuthor = {
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(noAuthor)
+            .expect(400);
+            
+            expect(body.msg).toBe('invalid author');
+        });
+
+        test('404: should have correct error message if author not found', async () => {
+            const unknownAuthor = {
+                author: 'not_an_author',
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(unknownAuthor)
+            .expect(404);
+
+            expect(body.msg).toBe('username not found');
+        });
+
+        test('400: should have correct error message if title is blank', async () => {
+            const blankTitle = {
+                author: 'butter_bridge',
+                title: '',
+                body: 'I find this existence challenging',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(blankTitle)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid title');
+        });
+
+        test('400: should have correct error message if title is missing', async () => {
+            const noTitle = {
+                author: 'butter_bridge',
+                body: 'I find this existence challenging',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(noTitle)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid title');
+        });
+
+        test('400: should have correct error message if body is blank', async () => {
+            const blankBody = {
+                author: 'butter_bridge',
+                title: 'Living in the shadow of a great man',
+                body: '',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(blankBody)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid body');
+        });
+
+        test('400: should have correct error message if body is missing', async () => {
+            const noBody = {
+                author: 'butter_bridge',
+                title: 'Living in the shadow of a great man',
+                topic: 'mitch',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(noBody)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid body');
+        });
+
+        test('400: should have correct error message if topic is blank', async () => {
+            const blankTopic = {
+                author: 'butter_bridge',
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                topic: '',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(blankTopic)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid topic');
+        });
+
+        test('400: should have correct error message if topic is missing', async () => {
+            const noTopic = {
+                author: 'butter_bridge',
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(noTopic)
+            .expect(400);
+
+            expect(body.msg).toBe('invalid topic');
+        });
+
+        test('404: should have correct error message if topic not found', async () => {
+            const unknownTopic = {
+                author: 'butter_bridge',
+                title: 'Living in the shadow of a great man',
+                body: 'I find this existence challenging',
+                topic: 'not_a_topic',
+                article_img_url: 'https://images.pexels.com/photos/158651/news-newsletter-newspaper-information-158651.jpeg?w=700&h=700'
+            }
+
+            const { body } = await request(app)
+            .post('/api/articles')
+            .send(unknownTopic)
+            .expect(404);
+
+            expect(body.msg).toBe('slug not found');
+        });
+    });
+});
+
+// TODO:
+// change to ES6 import
+// 'type: module' in package.json

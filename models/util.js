@@ -1,63 +1,28 @@
 const format = require('pg-format');
 const db = require('../db/connection.js');
 
-async function validateParams(params) {
-    const checks = [];
+const greenlists = {
+    sort_by: ['author', 'title', 'topic', 'created_at', 'votes', 'comment_count'],
+    order: ['ASC', 'DESC']
+};
 
-    const greenlists = {
-        sort_by: ['author', 'title', 'topic', 'created_at', 'votes', 'comment_count'],
-        order: ['ASC', 'DESC']
-    };
-
-    if (Object.keys(params).includes('article_id')) {
-        checks.push(rejectIfNotInTable('articles', 'article_id', params.article_id));
-    }
-
-    if (Object.keys(params).includes('comment_id')) {
-        checks.push(rejectIfNotInTable('comments', 'comment_id', params.comment_id));
-    }
-
-    if (Object.keys(params).includes('username')) {
-        checks.push(rejectIfNotInTable('users', 'username', params.username));
-    }
-
-    if (Object.keys(params).includes('topic')) {
-        if (params.topic !== '%') checks.push(rejectIfNotInTable('topics', 'slug', params.topic));
-        checks.push(rejectIfFalsy('topic', params.topic));
-    }
-
-    if (Object.keys(params).includes('comment')) {
-        checks.push(rejectIfFalsy('comment', params.comment));
-    }
-
-    if (Object.keys(params).includes('inc_votes')) {
-        checks.push(rejectIfFalsy('inc_votes', params.inc_votes));
-    }
-
-    if (Object.keys(params).includes('sort_by')) {
-        checks.push(rejectIfNotInGreenlist('sort_by', params.sort_by, greenlists.sort_by));
-    }
-
-    if (Object.keys(params).includes('order')) {
-        checks.push(rejectIfNotInGreenlist('order', params.order, greenlists.order));
-    }
-
-    await Promise.all(checks);
-}
-
-function rejectIfFalsy(name, value) {
-    if (!value) {
-        return Promise.reject({ status: 400, msg: `invalid ${name}` })
+function rejectIfFalsy(values) {
+    for (const key in values) {
+        if (!values[key]) {
+            return Promise.reject({ status: 400, msg: `invalid ${key}` })
+        }
     }
 }
 
-function rejectIfNotInGreenlist(name, value, greenlist) {
-    if (!greenlist.includes(value)) {
-        return Promise.reject({ status: 400, msg: `invalid ${name}`});
+function rejectIfNotInGreenlist(values, greenlist) {
+    for (const key in values) {
+        if (!greenlist.includes(values[key])) {
+            return Promise.reject({ status: 400, msg: `invalid ${key}`});
+        }
     }
 }
 
-async function rejectIfNotInTable(table, column, value) {
+async function rejectIfNotInTable(value, table, column) {
     const queryString = format(`
         SELECT * FROM %I
         WHERE %I = $1;
@@ -71,5 +36,8 @@ async function rejectIfNotInTable(table, column, value) {
 }
 
 module.exports = {
-    validateParams
+    greenlists,
+    rejectIfFalsy,
+    rejectIfNotInGreenlist,
+    rejectIfNotInTable
 };

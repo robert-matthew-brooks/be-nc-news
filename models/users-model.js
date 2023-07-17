@@ -10,7 +10,7 @@ async function getAll() {
 }
 
 async function get(username) {
-    await util.validateParams({ username })
+    await util.rejectIfNotInTable(username, 'users', 'username')
 
     const { rows } = await db.query(`
         SELECT * FROM users

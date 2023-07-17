@@ -7,6 +7,7 @@ const articlesRouter = express.Router();
 articlesRouter.get('/:article_id', articlesController.get);
 articlesRouter.get('/', articlesController.getAll);
 articlesRouter.patch('/:article_id', articlesController.patch);
+articlesRouter.post('/', articlesController.post);
 
 articlesRouter.get('/:article_id/comments', commentsController.getAll);
 articlesRouter.post('/:article_id/comments', commentsController.post);
