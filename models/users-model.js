@@ -1,5 +1,5 @@
 const db = require('../db/connection.js');
-const util = require('./util.js');
+const validate = require('./validate.js');
 
 async function getAll() {
     const { rows } = await db.query(`
@@ -10,7 +10,7 @@ async function getAll() {
 }
 
 async function get(username) {
-    await util.rejectIfNotInTable(username, 'users', 'username')
+    await validate.rejectIfNotInTable(username, 'users', 'username')
 
     const { rows } = await db.query(`
         SELECT * FROM users

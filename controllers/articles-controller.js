@@ -14,11 +14,11 @@ async function get(req, res, next) {
 }
 
 async function getAll(req, res, next) {
-    const { topic, sort_by, order } = req.query;
+    const { topic, sort_by, order, limit, p } = req.query;
 
     try {
-        const articles = await articlesModel.getAll(topic, sort_by, order);
-        res.status(200).send({ articles });
+        const { articles, total_count } = await articlesModel.getAll(topic, sort_by, order, limit, p);
+        res.status(200).send({ articles, total_count });
     }
 
     catch(err) {

@@ -119,7 +119,7 @@ describe('GET /api/articles', () => {
         };
 
         const { body } = await request(app)
-        .get('/api/articles')
+        .get('/api/articles?limit=999')
         .expect(200);
 
         expect(body.articles).toHaveLength(13);
@@ -547,7 +547,7 @@ describe('GET /api/articles (queries)', () => {
         .get('/api/articles?not_a_variable=not_a_value')
         .expect(200);
 
-        expect(body.articles).toHaveLength(13);
+        expect(body.total_count).toBe(13);
     });
 
     test('200: should have 12 articles when filtered by topic "mitch"', async () => {
@@ -555,7 +555,7 @@ describe('GET /api/articles (queries)', () => {
         .get('/api/articles?topic=mitch')
         .expect(200);
 
-        expect(body.articles).toHaveLength(12);
+        expect(body.total_count).toBe(12);
 
         for (const article of body.articles) {
             expect(article.topic).toBe('mitch');
@@ -592,7 +592,7 @@ describe('GET /api/articles (queries)', () => {
         .get('/api/articles?topic=mitch&sort_by=votes&order=desc')
         .expect(200);
 
-        expect(body.articles).toHaveLength(12);
+        expect(body.total_count).toBe(12);
 
         for (const article of body.articles) {
             expect(article.topic).toBe('mitch');
@@ -606,7 +606,7 @@ describe('GET /api/articles (queries)', () => {
         .get('/api/articles?order=asc&sort_by=date&topic=mitch')
         .expect(200);
 
-        expect(body.articles).toHaveLength(12);
+        expect(body.total_count).toBe(12);
 
         for (const article of body.articles) {
             expect(article.topic).toBe('mitch');
@@ -849,8 +849,6 @@ describe('POST /api/articles', () => {
         const { body } = await request(app)
         .post('/api/articles')
         .send(postArticleRequest);
-
-        console.log(body);
    
         expect(body.article).toMatchObject(expectedArticle);
         expect(body.article.author).toBe(postArticleRequest.author);
@@ -900,7 +898,7 @@ describe('POST /api/articles', () => {
         .get('/api/articles')
         .expect(200)
         .then(({ body }) => {
-            articlesBefore = body.articles.length;
+            articlesBefore = body.total_count;
 
             return request(app)
             .post('/api/articles')
@@ -913,7 +911,7 @@ describe('POST /api/articles', () => {
             .expect(200);
         })
         .then(({ body }) => {
-            articlesAfter = body.articles.length;
+            articlesAfter = body.total_count;
             
             expect(articlesAfter).toBe(articlesBefore + 1);
         });
@@ -1092,6 +1090,129 @@ describe('POST /api/articles', () => {
             .expect(404);
 
             expect(body.msg).toBe('slug not found');
+        });
+    });
+});
+
+describe('GET /api/articles (pagination)', () => {
+    test('200: should have 10 articles when limit not specified', async () => {
+        const { body } = await request(app)
+        .get('/api/articles')
+        .expect(200);
+
+        expect(body.articles).toHaveLength(10);
+    });
+
+    test('200: should limit the number of article responses', async () => {
+        const { body: body9 } = await request(app)
+        .get('/api/articles?limit=9')
+        .expect(200);
+
+        expect(body9.articles).toHaveLength(9);
+
+        const { body: body11 } = await request(app)
+        .get('/api/articles?limit=11')
+        .expect(200);
+
+        expect(body11.articles).toHaveLength(11);
+    });
+
+    test('200: should provide articles starting as specified page', async () => {
+        const { body: bodyNoPage } = await request(app)
+        .get('/api/articles?limit=3')
+        .expect(200);
+        
+        const { body: bodyPage1 } = await request(app)
+        .get('/api/articles?limit=3&p=1')
+        .expect(200);
+
+        const { body: bodyPage2 } = await request(app)
+        .get('/api/articles?limit=3&p=2')
+        .expect(200);
+
+        expect(bodyPage1).toEqual(bodyNoPage);
+        expect(bodyPage1).not.toEqual(bodyPage2);
+    });
+
+    test('200: should provide total_count property of 13', async () => {
+        const { body } = await request(app)
+        .get('/api/articles')
+        .expect(200);
+
+        expect(body.total_count).toBe(13);
+    });
+
+    test('200: should provide correct total_count property when results are filtered', async () => {
+        const { body } = await request(app)
+        .get('/api/articles?topic=mitch')
+        .expect(200);
+
+        expect(body.total_count).toBe(12);
+    });
+
+    test('200: should provide empty array if requested results page is beyond total articles', async () => {
+        const { body } = await request(app)
+        .get('/api/articles?limit=99&p=99')
+        .expect(200);
+
+        expect(body.articles).toHaveLength(0);
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if limit is missing', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?limit=')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if limit is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?limit=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if limit is less than 1', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?limit=0')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if page is missing', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?p=')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?p=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?p=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is less than 1', async () => {
+            const { body } = await request(app)
+            .get('/api/articles?p=0')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
         });
     });
 });
