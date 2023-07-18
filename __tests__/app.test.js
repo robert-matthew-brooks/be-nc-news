@@ -171,7 +171,7 @@ describe('GET /api/articles/:article_id/comments', () => {
         };
 
         const { body } = await request(app)
-        .get('/api/articles/1/comments')
+        .get('/api/articles/1/comments?limit=999')
         .expect(200);
 
         expect(body.comments).toHaveLength(11);
@@ -239,16 +239,16 @@ describe('POST /api/articles/:article_id/comments', () => {
         let commentsAfter;
 
         const { body: bodyBefore } = await request(app)
-        .get('/api/articles/1/comments')
+        .get('/api/articles/1/comments?limit=999')
         .expect(200);
 
         await request(app)
-        .post('/api/articles/1/comments')
+        .post('/api/articles/1/comments?limit=999')
         .send(postCommentRequest)
         .expect(201);
 
         const { body: bodyAfter } = await request(app)
-        .get('/api/articles/1/comments')
+        .get('/api/articles/1/comments?limit=999')
         .expect(200);
             
         expect(bodyAfter.comments.length).toBe(bodyBefore.comments.length + 1);
@@ -1117,7 +1117,7 @@ describe('GET /api/articles (pagination)', () => {
         expect(body11.articles).toHaveLength(11);
     });
 
-    test('200: should provide articles starting as specified page', async () => {
+    test('200: should provide articles starting at specified page', async () => {
         const { body: bodyNoPage } = await request(app)
         .get('/api/articles?limit=3')
         .expect(200);
@@ -1216,6 +1216,122 @@ describe('GET /api/articles (pagination)', () => {
         });
     });
 });
+
+describe('GET /api/articles/:article_id/comments (pagination)', () => {
+    test('200: should have 10 comments when limit not specified', async () => {
+        const { body } = await request(app)
+        .get('/api/articles/1/comments')
+        .expect(200);
+
+        expect(body.comments).toHaveLength(10);
+    });
+
+    test('200: should limit the number of comment responses', async () => {
+        const { body: body9 } = await request(app)
+        .get('/api/articles/1/comments?limit=9')
+        .expect(200);
+
+        expect(body9.comments).toHaveLength(9);
+
+        const { body: body11 } = await request(app)
+        .get('/api/articles/1/comments?limit=11')
+        .expect(200);
+
+        expect(body11.comments).toHaveLength(11);
+    });
+
+    test('200: should provide comments starting at specified page', async () => {
+        const { body: bodyNoPage } = await request(app)
+        .get('/api/articles/1/comments?limit=3')
+        .expect(200);
+        
+        const { body: bodyPage1 } = await request(app)
+        .get('/api/articles/1/comments?limit=3&p=1')
+        .expect(200);
+
+        const { body: bodyPage2 } = await request(app)
+        .get('/api/articles/1/comments?limit=3&p=2')
+        .expect(200);
+
+        expect(bodyPage1).toEqual(bodyNoPage);
+        expect(bodyPage1).not.toEqual(bodyPage2);
+    });
+
+    test('200: should provide total_count property of 11', async () => {
+        const { body } = await request(app)
+        .get('/api/articles/1/comments')
+        .expect(200);
+
+        expect(body.total_count).toBe(11);
+    });
+
+    test('200: should provide empty array if requested results page is beyond total comments', async () => {
+        const { body } = await request(app)
+        .get('/api/articles/1/comments?limit=99&p=99')
+        .expect(200);
+
+        expect(body.comments).toHaveLength(0);
+    });
+
+    describe('error handling', () => {
+        test('400: should have correct error message if limit is missing', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?limit=')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if limit is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?limit=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if limit is less than 1', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?limit=0')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid limit');
+        });
+
+        test('400: should have correct error message if page is missing', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?p=')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?p=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is invalid', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?p=invalid')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+
+        test('400: should have correct error message if page is less than 1', async () => {
+            const { body } = await request(app)
+            .get('/api/articles/1/comments?p=0')
+            .expect(400);
+
+            expect(body.msg).toBe('invalid p');
+        });
+    });
+});
+
 
 // TODO:
 // change to ES6 import
