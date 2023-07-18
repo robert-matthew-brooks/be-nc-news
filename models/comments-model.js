@@ -1,8 +1,14 @@
 const db = require('../db/connection.js');
 const validate = require('./validate.js');
 
-async function getAll(article_id) {
-    await validate.rejectIfNotInTable(article_id, 'articles', 'article_id');
+async function getAll(article_id, limit = 10, p = 1) {
+    await Promise.all([
+        validate.rejectIfNotInTable(article_id, 'articles', 'article_id'),
+        validate.rejectIfFalsy({ limit, p }),
+        validate.rejectIfNotPositiveNumeric({ limit, p })
+    ]);
+
+    const offset = limit * (p-1);
 
     const { rows } = await db.query(`
         SELECT comments.comment_id,
@@ -15,10 +21,22 @@ async function getAll(article_id) {
         JOIN comments
         ON articles.article_id = comments.article_id
         WHERE comments.article_id = $1
-        ORDER BY comments.created_at DESC;
+        ORDER BY comments.created_at DESC
+        LIMIT ${limit} OFFSET ${offset};
     `, [article_id]);
 
-    return rows;
+    const allCommentIds = await db.query(`
+        SELECT comments.comment_id
+        FROM articles
+        JOIN comments
+        ON articles.article_id = comments.article_id
+        WHERE comments.article_id = $1;
+    `, [article_id]);
+
+    return {
+        comments: rows,
+        total_count: allCommentIds.rows.length
+    };
 }
 
 async function post(article_id, username, comment) {
