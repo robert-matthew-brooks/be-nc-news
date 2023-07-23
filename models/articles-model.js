@@ -31,10 +31,11 @@ async function getAll(topic = '%', sort_by = 'date', order = 'DESC', limit = 10,
     order = order.toUpperCase();
 
     await Promise.all([
-        validate.rejectIfFalsy({ topic, limit, p }),
+        validate.rejectIfFalsy({ topic }),
         validate.rejectIfNotInGreenlist({ sort_by }, validate.greenlists.sort_by),
         validate.rejectIfNotInGreenlist({ order }, validate.greenlists.order),
-        validate.rejectIfNotPositiveNumeric({ limit, p })
+        validate.rejectIfNotNumber({ limit, p }),
+        validate.rejectIfLessThan({ limit, p }, 1),
     ]);
     if (topic !== '%') await validate.rejectIfNotInTable(topic, 'topics', 'slug');
 

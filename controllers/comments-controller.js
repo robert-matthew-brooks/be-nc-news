@@ -2,10 +2,10 @@ const commentsModel = require('../models/comments-model.js');
 
 async function getAll(req, res, next) {
     const { article_id } = req.params;
-    const { limit, p } = req.query;
+    const { limit, offset } = req.query;
     
     try {
-        const { comments, total_count } = await commentsModel.getAll(article_id, limit, p);
+        const { comments, total_count } = await commentsModel.getAll(article_id, limit, offset);
         res.status(200).send({ comments, total_count });
     }
     

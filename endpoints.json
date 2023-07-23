@@ -45,7 +45,8 @@
     }
   },
   "GET /api/articles/:article_id/comments": {
-    "description": "responds with an array of comments for a given article",
+    "description": "responds with a limited offset array of comments for a given article",
+    "queries": ["limit", "offset"],
     "exampleResponse": {
       "comments": [{
         "comment_id": 5,
