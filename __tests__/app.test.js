@@ -1240,21 +1240,21 @@ describe('GET /api/articles/:article_id/comments (pagination)', () => {
         expect(body11.comments).toHaveLength(11);
     });
 
-    test('200: should provide comments starting at specified page', async () => {
-        const { body: bodyNoPage } = await request(app)
+    test('200: should provide comments starting at specified offset', async () => {
+        const { body: bodyNoOffset } = await request(app)
         .get('/api/articles/1/comments?limit=3')
         .expect(200);
         
-        const { body: bodyPage1 } = await request(app)
-        .get('/api/articles/1/comments?limit=3&p=1')
+        const { body: bodyOffset0 } = await request(app)
+        .get('/api/articles/1/comments?limit=3&offset=0')
         .expect(200);
 
-        const { body: bodyPage2 } = await request(app)
-        .get('/api/articles/1/comments?limit=3&p=2')
+        const { body: bodyOffset3 } = await request(app)
+        .get('/api/articles/1/comments?limit=3&offset=3')
         .expect(200);
 
-        expect(bodyPage1).toEqual(bodyNoPage);
-        expect(bodyPage1).not.toEqual(bodyPage2);
+        expect(bodyOffset0).toEqual(bodyNoOffset);
+        expect(bodyOffset0).not.toEqual(bodyOffset3);
     });
 
     test('200: should provide total_count property of 11', async () => {
@@ -1267,7 +1267,7 @@ describe('GET /api/articles/:article_id/comments (pagination)', () => {
 
     test('200: should provide empty array if requested results page is beyond total comments', async () => {
         const { body } = await request(app)
-        .get('/api/articles/1/comments?limit=99&p=99')
+        .get('/api/articles/1/comments?limit=99&offset=99')
         .expect(200);
 
         expect(body.comments).toHaveLength(0);
@@ -1298,36 +1298,36 @@ describe('GET /api/articles/:article_id/comments (pagination)', () => {
             expect(body.msg).toBe('invalid limit');
         });
 
-        test('400: should have correct error message if page is missing', async () => {
+        test('400: should have correct error message if offset is missing', async () => {
             const { body } = await request(app)
-            .get('/api/articles/1/comments?p=')
+            .get('/api/articles/1/comments?offset=')
             .expect(400);
 
-            expect(body.msg).toBe('invalid p');
+            expect(body.msg).toBe('invalid offset');
         });
 
-        test('400: should have correct error message if page is invalid', async () => {
+        test('400: should have correct error message if offset is invalid', async () => {
             const { body } = await request(app)
-            .get('/api/articles/1/comments?p=invalid')
+            .get('/api/articles/1/comments?offset=invalid')
             .expect(400);
 
-            expect(body.msg).toBe('invalid p');
+            expect(body.msg).toBe('invalid offset');
         });
 
-        test('400: should have correct error message if page is invalid', async () => {
+        test('400: should have correct error message if offset is invalid', async () => {
             const { body } = await request(app)
-            .get('/api/articles/1/comments?p=invalid')
+            .get('/api/articles/1/comments?offset=invalid')
             .expect(400);
 
-            expect(body.msg).toBe('invalid p');
+            expect(body.msg).toBe('invalid offset');
         });
 
-        test('400: should have correct error message if page is less than 1', async () => {
+        test('400: should have correct error message if offset is less than 0', async () => {
             const { body } = await request(app)
-            .get('/api/articles/1/comments?p=0')
+            .get('/api/articles/1/comments?offset=-1')
             .expect(400);
 
-            expect(body.msg).toBe('invalid p');
+            expect(body.msg).toBe('invalid offset');
         });
     });
 });

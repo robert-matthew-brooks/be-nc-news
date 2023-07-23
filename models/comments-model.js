@@ -1,14 +1,13 @@
 const db = require('../db/connection.js');
 const validate = require('./validate.js');
 
-async function getAll(article_id, limit = 10, p = 1) {
+async function getAll(article_id, limit = 10, offset = 0) {
     await Promise.all([
         validate.rejectIfNotInTable(article_id, 'articles', 'article_id'),
-        validate.rejectIfFalsy({ limit, p }),
-        validate.rejectIfNotPositiveNumeric({ limit, p })
+        validate.rejectIfNotNumber({ limit, offset }),
+        validate.rejectIfLessThan({ limit }, 1),
+        validate.rejectIfLessThan({ offset }, 0),
     ]);
-
-    const offset = limit * (p-1);
 
     const { rows } = await db.query(`
         SELECT comments.comment_id,
